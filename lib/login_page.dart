@@ -12,10 +12,29 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  final FocusNode _usernameFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+
   bool _isLoading = false;
   String? _errorMessage;
   String? _successMessage;
+  String? token;
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _redirectToHomeIfNotSignedIn();
+  }
+
+  /// Redirects to home if the user is not signed in
+  Future<void> _redirectToHomeIfNotSignedIn() async {
+    token = await AuthService().getToken();
+    if (token != null) {
+      Navigator.pushReplacementNamed(context, '/'); // Redirect to home
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -35,6 +54,31 @@ class _LoginPageState extends State<LoginPage> {
       _errorMessage = null;
       _successMessage = null; // Clear success message
     });
+
+    if (_usernameController.text.trim().length == 0 &&
+        _passwordController.text.trim().length == 0){
+      setState(() {
+        _errorMessage = "Username and password are required.";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (_usernameController.text.trim().length == 0){
+      setState(() {
+        _errorMessage = "Username is required.";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (_passwordController.text.trim().length == 0){
+      setState(() {
+        _errorMessage = "Password is required.";
+        _isLoading = false;
+      });
+      return;
+    }
 
     try {
       const String url = "http://localhost:8080/v1/auth/login";
@@ -83,11 +127,66 @@ class _LoginPageState extends State<LoginPage> {
       _selectedIndex = index;
     });
 
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/'); // Navigate to Home
-    } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/signup'); // Navigate to Sign Up
+    switch (index) {
+      case 0: // Home
+        Navigator.pushReplacementNamed(context, '/');
+        break;
+
+      case 1: // Profile
+        if (token != null) {
+          Navigator.pushReplacementNamed(context, '/profile');
+        } else {
+          Navigator.pushNamed(context, '/login');
+        }
+        break;
+
+      case 2: // Rules
+        Navigator.pushNamed(context, '/rules');
+        break;
+
+      default:
+        break;
     }
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, bool obscureText, FocusNode focusNode, FocusNode? nextFocusNode) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8),
+        Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.4, // 80% of page width
+            child: TextField(
+              controller: controller,
+              obscureText: obscureText,
+              focusNode: focusNode,
+              textInputAction: nextFocusNode == null ? TextInputAction.done : TextInputAction.next,
+              onSubmitted: (_) {
+                if (nextFocusNode != null) {
+                  FocusScope.of(context).requestFocus(nextFocusNode); // Move to next field
+                } else {
+                  _login(); // Submit when Enter is pressed in password field
+                }
+              },
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: label, // Placeholder text
+                hintStyle: GoogleFonts.outfit(
+                  textStyle: TextStyle(color: Colors.white54),
+                ),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.2),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -106,57 +205,89 @@ class _LoginPageState extends State<LoginPage> {
                     if (_successMessage != null) ...[
                       Text(
                         _successMessage!,
-                        style: TextStyle(color: Colors.green, fontSize: 16),
+                        style: GoogleFonts.outfit(
+                          textStyle: TextStyle(
+                            fontSize: 16,
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold
+                          ),
+                        ),
                       ),
                       SizedBox(height: 20),
                     ],
                     Text(
                       "Login",
-                      style: GoogleFonts.fredoka(
-                        textStyle: TextStyle(
+                      style: TextStyle(
                           fontSize: 48,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                          fontFamily: 'Doto',
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white
+                        )
                     ),
                     SizedBox(height: 20),
                     Text(
                       "Welcome back! Log in to continue.",
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.outfit(
                         textStyle: TextStyle(
                           fontSize: 16,
                           color: Colors.white70,
                         ),
                       ),
                     ),
-                    SizedBox(height: 40),
+                    SizedBox(height: 20),
                     if (_errorMessage != null) ...[
                       Text(
                         _errorMessage!,
-                        style: TextStyle(color: Colors.red, fontSize: 16),
+                        style: GoogleFonts.outfit(
+                          textStyle: GoogleFonts.outfit(
+                                textStyle: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.bold,
+                                ),
+                          )
+                        )
                       ),
                       SizedBox(height: 20),
                     ],
-                    _buildTextField("Username", _usernameController, false),
+                    _buildTextField("username", _usernameController, false, _usernameFocus, _passwordFocus),
                     SizedBox(height: 20),
-                    _buildTextField("Password", _passwordController, true),
+                    _buildTextField("password", _passwordController, true, _passwordFocus, null),
                     SizedBox(height: 40),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: Colors.lightGreen,
                         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                       child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.white)
+                          ? CircularProgressIndicator(color: Colors.black)
                           : Text(
                         "Submit",
-                        style: GoogleFonts.poppins(
-                          textStyle: TextStyle(fontSize: 18, color: Colors.white),
+                        style: GoogleFonts.outfit(
+                          textStyle: TextStyle(fontSize: 18, color: Colors.black),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _browseToSignup,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? CircularProgressIndicator(color: Colors.black)
+                          : Text(
+                        "Sign up Instead",
+                        style: GoogleFonts.outfit(
+                          textStyle: TextStyle(fontSize: 18, color: Colors.black),
                         ),
                       ),
                     ),
@@ -171,32 +302,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool obscureText) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            textStyle: TextStyle(fontSize: 16, color: Colors.white70),
-          ),
-        ),
-        SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          style: TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.2),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
-    );
+  void _browseToSignup(){
+    Navigator.pushNamed(context, '/signup');
   }
 
   Widget _buildBackground() {
@@ -231,9 +338,15 @@ class _LoginPageState extends State<LoginPage> {
         ),
         BottomNavigationBarItem(
           icon: Icon(
-            _selectedIndex == 1 ? Icons.person_add : Icons.person_add_alt,
+            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
           ),
-          label: 'Sign Up',
+          label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
+          ),
+          label: 'Rules',
         ),
       ],
       selectedItemColor: Colors.grey,

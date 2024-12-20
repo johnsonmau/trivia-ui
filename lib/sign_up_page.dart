@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:trivia_ui/country_dropdown.dart';
 import 'dart:convert';
 import 'auth_service.dart';
 
@@ -13,35 +14,86 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  final FocusNode _usernameFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmPasswordFocus = FocusNode();
+
   String? token;
   String? _errorMessage;
   bool _isLoading = false;
 
-  int _selectedIndex = 0; // Default to no selected bottom navigation item
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadToken();
+    _redirectToHomeIfNotSignedIn();
   }
 
-  Future<void> _loadToken() async {
+  Future<void> _redirectToHomeIfNotSignedIn() async {
     token = await AuthService().getToken();
-    setState(() {});
+    if (token != null) {
+      Navigator.pushReplacementNamed(context, '/');
+    }
   }
 
   void _onBottomNavigationTapped(int index) {
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/');
-    } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/login');
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    switch (index) {
+      case 0: // Home
+        Navigator.pushReplacementNamed(context, '/');
+        break;
+
+      case 1: // Profile
+        if (token != null) {
+          Navigator.pushReplacementNamed(context, '/profile');
+        } else {
+          Navigator.pushNamed(context, '/login');
+        }
+        break;
+
+      case 2: // Rules
+        Navigator.pushNamed(context, '/rules');
+        break;
+
+      default:
+        break;
     }
   }
 
   Future<void> _signUp() async {
+
+    bool requiredFields = _passwordController.text.trim().length == 0 || _confirmPasswordController.text.trim().length == 0
+        || _usernameController.text.trim().length == 0 || _passwordController.text.trim().length == 0;
+
+    if (requiredFields){
+      setState(() {
+        _errorMessage = "All fields are required.";
+      });
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _errorMessage = "Passwords do not match.";
+      });
+      return;
+    }
+
+    if (_usernameController.text.trim().length < 5){
+      setState(() {
+        _errorMessage = "Username must be at least 5 characters.";
+      });
+      return;
+    }
+
+    if (_passwordController.text.trim().length < 6){
+      setState(() {
+        _errorMessage = "Password must be at least 6 characters.";
       });
       return;
     }
@@ -85,6 +137,48 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
+  //Widget _buildDropDownMenu
+
+  Widget _buildTextField(String label, TextEditingController controller, bool obscureText,
+      FocusNode focusNode, FocusNode? nextFocusNode) {
+    return Center(
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.4, // 80% of page width
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              obscureText: obscureText,
+              focusNode: focusNode,
+              textInputAction: nextFocusNode == null ? TextInputAction.done : TextInputAction.next,
+              onSubmitted: (_) {
+                if (nextFocusNode != null) {
+                  FocusScope.of(context).requestFocus(nextFocusNode); // Move to the next field
+                } else {
+                  _signUp(); // Trigger submit when Enter is pressed on Confirm Password field
+                }
+              },
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: label, // Dynamic placeholder
+                hintStyle: GoogleFonts.outfit(
+                  textStyle: TextStyle(color: Colors.white54),
+                ),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.2),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,40 +194,71 @@ class _SignUpPageState extends State<SignUpPage> {
                   children: [
                     Text(
                       "Sign Up",
-                      style: GoogleFonts.fredoka(
-                        textStyle: TextStyle(
+                      style: TextStyle(
                           fontSize: 48,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                          fontFamily: 'Doto',
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white
+                      )
                     ),
                     SizedBox(height: 20),
                     Text(
                       "Join us! Create an account to start.",
-                      style: GoogleFonts.poppins(
-                        textStyle: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
+                      style: GoogleFonts.outfit(
+                        textStyle: GoogleFonts.outfit(
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      ),
+                    ),
+                    if (_errorMessage != null) ...[
+                      SizedBox(height: 20),
+                      Text(
+                        _errorMessage!,
+                        style: GoogleFonts.outfit(
+                            textStyle: GoogleFonts.outfit(
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 20),
+                    _buildTextField("username", _usernameController, false, _usernameFocus, _passwordFocus),
+                    SizedBox(height: 20),
+                    _buildTextField("password", _passwordController, true, _passwordFocus, _confirmPasswordFocus),
+                    SizedBox(height: 20),
+                    _buildTextField("confirm password", _confirmPasswordController, true, _confirmPasswordFocus, null),
+                    SizedBox(height: 20),
+                    CountryDropdown(),
+                    SizedBox(height: 40),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _signUp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lightGreen,
+                        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? CircularProgressIndicator(color: Colors.black)
+                          : Text(
+                        "Submit",
+                        style: GoogleFonts.outfit(
+                          textStyle: TextStyle(fontSize: 18, color: Colors.black),
                         ),
                       ),
                     ),
                     SizedBox(height: 40),
-                    if (_errorMessage != null) ...[
-                      Text(
-                        _errorMessage!,
-                        style: TextStyle(color: Colors.red, fontSize: 16),
-                      ),
-                      SizedBox(height: 20),
-                    ],
-                    _buildTextField("Username", _usernameController, false),
-                    SizedBox(height: 20),
-                    _buildTextField("Password", _passwordController, true),
-                    SizedBox(height: 20),
-                    _buildTextField("Confirm Password", _confirmPasswordController, true),
-                    SizedBox(height: 40),
                     ElevatedButton(
-                      onPressed: _isLoading ? null : _signUp,
+                      onPressed: _isLoading ? null : _browseToLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
@@ -144,8 +269,8 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: _isLoading
                           ? CircularProgressIndicator(color: Colors.black)
                           : Text(
-                        "Submit",
-                        style: GoogleFonts.poppins(
+                        "Already have an account? Log in",
+                        style: GoogleFonts.outfit(
                           textStyle: TextStyle(fontSize: 18, color: Colors.black),
                         ),
                       ),
@@ -161,32 +286,8 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool obscureText) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            textStyle: TextStyle(fontSize: 16, color: Colors.white70),
-          ),
-        ),
-        SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          style: TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.2),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
-    );
+  void _browseToLogin(){
+    Navigator.pushNamed(context, '/login');
   }
 
   Widget _buildBackground() {
@@ -214,15 +315,25 @@ class _SignUpPageState extends State<SignUpPage> {
       backgroundColor: Colors.blueGrey,
       items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
+          icon: Icon(
+            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
+          ),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.login_outlined),
-          label: 'Login',
+          icon: Icon(
+            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
+          ),
+          label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
+          ),
+          label: 'Rules',
         ),
       ],
-      selectedItemColor: Colors.white,
+      selectedItemColor: Colors.grey,
       unselectedItemColor: Colors.grey,
     );
   }

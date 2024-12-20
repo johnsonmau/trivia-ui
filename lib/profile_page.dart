@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'auth_service.dart';
+import 'dart:async';
+import 'dart:math';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -14,7 +16,9 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   String username = "Unknown User";
   int _selectedIndex = 1; // Default to Profile tab
-
+  bool _isAscending = true; // Default sorting direction
+  String _sortColumn = 'score'; // Default sort by 'score'
+  List<dynamic> scores = [];
   @override
   void initState() {
     super.initState();
@@ -24,14 +28,20 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _checkAuthentication() async {
     String? token = await AuthService().getToken();
     if (token == null || token.isEmpty) {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/');
       return;
+    }
+
+    if (AuthService().badToken(token)){
+      AuthService().clearToken();
+      Navigator.pushReplacementNamed(context, '/');
     }
 
     Map<String, dynamic>? userDetails = await AuthService().getUserDetails(token);
     if (userDetails != null) {
       setState(() {
         username = userDetails['username'] ?? "Unknown User";
+        scores = userDetails['scores'];
         _isAuthenticated = true;
         _isLoading = false;
       });
@@ -80,25 +90,115 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showDeleteConfirmationDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Delete Account"),
-        content: Text("Are you sure you want to delete your account? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Close dialog
-            child: Text("Cancel"),
+      barrierDismissible: false, // Prevent dismiss by tapping outside
+      builder: (context) => Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Animated Icon
+                AnimatedScale(
+                  scale: 1.2,
+                  duration: const Duration(milliseconds: 500),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 60,
+                    color: Colors.redAccent,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Title
+                Text(
+                  "Delete Account",
+                  style: GoogleFonts.outfit(
+                    textStyle: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Content
+                Text(
+                  "Are you sure you want to delete your account? This action cannot be undone.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Action Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context), // Close dialog
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                        _deleteAccount();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        "Confirm",
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              _deleteAccount();
-            },
-            child: Text("Confirm"),
-          ),
-        ],
+        ),
       ),
     );
   }
+
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -121,8 +221,21 @@ class _ProfilePageState extends State<ProfilePage> {
       _selectedIndex = index;
     });
 
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/'); // Navigate to Home
+    switch (index) {
+      case 0: // Home
+        Navigator.pushReplacementNamed(context, '/');
+        break;
+
+      case 1: // Profile
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+
+      case 2: // Rules
+        Navigator.pushNamed(context, '/rules');
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -202,6 +315,8 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildWelcomeMessage(),
               SizedBox(height: 40),
               _buildPlayButton(),
+              const SizedBox(height: 20),
+              _buildScoresTable()
             ],
           ),
         ),
@@ -209,22 +324,362 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _sortScores(String column) {
+    setState(() {
+      if (_sortColumn == column) {
+        // If already sorted by this column, toggle the sort direction
+        _isAscending = !_isAscending;
+      } else {
+        // Otherwise, set the new sort column and default to ascending
+        _sortColumn = column;
+        _isAscending = true;
+      }
+
+      // Perform sorting based on the column
+      scores.sort((a, b) {
+        if (column == 'score') {
+          return _isAscending
+              ? a['score'].compareTo(b['score'])
+              : b['score'].compareTo(a['score']);
+        } else if (column == 'date') {
+          return _isAscending
+              ? a['date'].compareTo(b['date'])
+              : b['date'].compareTo(a['date']);
+        }
+        return 0;
+      });
+    });
+  }
+
+
+  Map<String, dynamic> getFeedbackByScore(int score) {
+    if (score > 1000) {
+      return {
+        'icon': Icons.flash_on,
+        'color': Colors.purpleAccent,
+        'description': 'Mythic Mastermind',
+      };
+    } else if (score > 950) {
+      return {
+        'icon': Icons.diamond,
+        'color': Colors.purple,
+        'description': 'Immortal Genius',
+      };
+    } else if (score > 900) {
+      return {
+        'icon': Icons.military_tech,
+        'color': Colors.deepOrange,
+        'description': 'Supreme Conqueror',
+      };
+    } else if (score > 850) {
+      return {
+        'icon': Icons.emoji_events,
+        'color': Colors.amberAccent,
+        'description': 'Celestial Champion',
+      };
+    } else if (score > 800) {
+      return {
+        'icon': Icons.star,
+        'color': Colors.orange,
+        'description': 'Galactic Warrior',
+      };
+    } else if (score > 750) {
+      return {
+        'icon': Icons.auto_awesome,
+        'color': Colors.teal,
+        'description': 'Eternal Innovator',
+      };
+    } else if (score > 700) {
+      return {
+        'icon': Icons.check_circle,
+        'color': Colors.green,
+        'description': 'Heroic Leader',
+      };
+    } else if (score > 650) {
+      return {
+        'icon': Icons.thumb_up_alt,
+        'color': Colors.blue,
+        'description': 'Strategic Master',
+      };
+    } else if (score > 600) {
+      return {
+        'icon': Icons.sentiment_very_satisfied,
+        'color': Colors.cyan,
+        'description': 'Tactical Genius',
+      };
+    } else if (score > 550) {
+      return {
+        'icon': Icons.sentiment_satisfied,
+        'color': Colors.lightBlueAccent,
+        'description': 'Sharp Thinker',
+      };
+    } else if (score > 500) {
+      return {
+        'icon': Icons.lightbulb,
+        'color': Colors.yellow,
+        'description': 'Brilliant Achiever',
+      };
+    } else if (score > 450) {
+      return {
+        'icon': Icons.timer,
+        'color': Colors.orangeAccent,
+        'description': 'Efficient Performer',
+      };
+    } else if (score > 400) {
+      return {
+        'icon': Icons.stars,
+        'color': Colors.pink,
+        'description': 'Shining Star',
+      };
+    } else if (score > 350) {
+      return {
+        'icon': Icons.thumb_up,
+        'color': Colors.greenAccent,
+        'description': 'Dedicated Player',
+      };
+    } else if (score > 300) {
+      return {
+        'icon': Icons.check,
+        'color': Colors.lightGreen,
+        'description': 'Skilled Performer',
+      };
+    } else if (score > 250) {
+      return {
+        'icon': Icons.task_alt,
+        'color': Colors.lime,
+        'description': 'Rising Star',
+      };
+    } else if (score > 200) {
+      return {
+        'icon': Icons.sentiment_neutral,
+        'color': Colors.yellow,
+        'description': 'Steady Progress',
+      };
+    } else if (score > 150) {
+      return {
+        'icon': Icons.sentiment_dissatisfied,
+        'color': Colors.orange,
+        'description': 'Needs Focus',
+      };
+    } else if (score > 100) {
+      return {
+        'icon': Icons.warning,
+        'color': Colors.redAccent,
+        'description': 'On the Right Path',
+      };
+    } else if (score > 75) {
+      return {
+        'icon': Icons.trending_down,
+        'color': Colors.red,
+        'description': 'Keep Practicing',
+      };
+    } else if (score > 50) {
+      return {
+        'icon': Icons.loop,
+        'color': Colors.grey,
+        'description': 'Try Again',
+      };
+    } else if (score > 25) {
+      return {
+        'icon': Icons.refresh,
+        'color': Colors.grey,
+        'description': 'Room for Growth',
+      };
+    } else {
+      return {
+        'icon': Icons.replay,
+        'color': Colors.grey,
+        'description': 'Don’t Give Up',
+      };
+    }
+  }
+
+  Widget _buildScoresTable() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tableWidth = constraints.maxWidth * 0.9;
+        final textScaleFactor = constraints.maxWidth / 400.0;
+
+        return Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              width: tableWidth,
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: scores.isEmpty
+                  ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    "No games played yet.",
+                    style: GoogleFonts.outfit(
+                      fontSize: 20 * textScaleFactor.clamp(0.8, 1.0),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                    ),
+                  ),
+                ),
+              )
+                  : SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: DataTable(
+                  sortColumnIndex: _sortColumn == 'score' ? 0 : 1,
+                  sortAscending: _isAscending,
+                  columnSpacing: tableWidth * 0.1,
+                  headingRowColor: MaterialStateProperty.all(Colors.black87),
+                  dataRowColor: MaterialStateProperty.all(Colors.black87),
+                  columns: [
+                    DataColumn(
+                      label: InkWell(
+                        onTap: () => _sortScores('score'),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Scores',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16 * textScaleFactor.clamp(0.8, 1.0),
+                                color: Colors.blueGrey,
+                              ),
+                            ),
+                            if (_sortColumn == 'score')
+                              Icon(
+                                _isAscending
+                                    ? Icons.arrow_upward
+                                    : Icons.arrow_downward,
+                                size: 16 * textScaleFactor.clamp(0.8, 1.0),
+                                color: Colors.blueGrey,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: InkWell(
+                        onTap: () => _sortScores('date'),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Date',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16 * textScaleFactor.clamp(0.8, 1.0),
+                                color: Colors.blueGrey,
+                              ),
+                            ),
+                            if (_sortColumn == 'date')
+                              Icon(
+                                _isAscending
+                                    ? Icons.arrow_upward
+                                    : Icons.arrow_downward,
+                                size: 16 * textScaleFactor.clamp(0.8, 1.0),
+                                color: Colors.blueGrey,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  rows: scores.map((score) {
+                    final feedback = getFeedbackByScore(score['score']);
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                flex: 2,
+                                child: Text(
+                                  '${score['score']}',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 20 * textScaleFactor.clamp(0.8, 1.0),
+                                    fontWeight: FontWeight.bold,
+                                    color: feedback['color'] as Color,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                flex: 3,
+                                child: Text(
+                                  '${feedback['description']}',
+                                  style: TextStyle(
+                                            fontSize: 15 * textScaleFactor.clamp(0.8, 1.0),
+                                            color: feedback['color'] as Color,
+                                            fontFamily: 'Doto',
+                                            fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Flexible(
+                                flex: 1,
+                                child: Icon(
+                                  feedback['icon'] as IconData,
+                                  color: feedback['color'] as Color,
+                                  size: 20 * textScaleFactor.clamp(0.8, 1.0),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            score['date'],
+                            style: GoogleFonts.outfit(
+                              fontSize: 12 * textScaleFactor.clamp(0.8, 1.0),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildWelcomeMessage() {
-    return Text(
-      "Welcome, $username!",
-      style: GoogleFonts.fredoka(
-        textStyle: TextStyle(
-          fontSize: 50,
-          color: Colors.white,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double fontSize = constraints.maxWidth * 0.15; // Adjusted multiplier for scaling
+
+        return Text(
+          "Welcome, $username!",
+          style: TextStyle(
+            fontSize: fontSize.clamp(35.0, 50.0), // Adjust min/max clamp range
+            fontFamily: 'Doto',
+            fontWeight: FontWeight.w900,
+            color: Colors.white
+          ),
+          textAlign: TextAlign.center,
+        );
+      },
     );
   }
 
   Widget _buildPlayButton() {
     return ElevatedButton(
       onPressed: () {
-        // Navigate to play functionality
+        Navigator.pushNamed(context, '/play');
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.green,
@@ -235,7 +690,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Text(
         "Play!",
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.outfit(
           textStyle: TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),
@@ -260,6 +715,12 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           label: 'Profile',
         ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
+          ),
+          label: 'Rules',
+        ),
       ],
       selectedItemColor: Colors.white,
       unselectedItemColor: Colors.grey,
@@ -267,32 +728,48 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildDrawer() {
-    return Drawer(
-      width: 200,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
-            title: Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
-            ),
-            onTap: () async {
-              await AuthService().clearToken();
-              Navigator.pushReplacementNamed(context, '/');
-            },
+    return ClipRRect(
+      borderRadius: BorderRadius.zero, // Ensures no rounded corners
+      child: Drawer(
+        width: 200,
+        child: Container(
+          color: Colors.black, // Change this to your desired background color
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: Text(
+                  "Logout",
+                  style: GoogleFonts.outfit(
+                    textStyle: const TextStyle(color: Colors.redAccent, fontSize: 16),
+                  ),
+                ),
+                onTap: () async {
+                  await AuthService().clearToken();
+                  Navigator.pushReplacementNamed(context, '/');
+                },
+              ),
+              const Spacer(), // Pushes the delete account button to the bottom
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: Text(
+                  "Delete Account",
+                  style: GoogleFonts.outfit(
+                    textStyle: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                  ),
+                ),
+                onTap: _showDeleteConfirmationDialog,
+              ),
+              const SizedBox(height: 20), // Add spacing at the bottom
+            ],
           ),
-          ListTile(
-            leading: Icon(Icons.delete, color: Colors.red),
-            title: Text(
-              "Delete Account",
-              style: TextStyle(color: Colors.red),
-            ),
-            onTap: _showDeleteConfirmationDialog,
-          ),
-        ],
+        ),
       ),
     );
   }
+
+
+
+
 }

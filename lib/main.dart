@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:trivia_ui/game_page.dart';
+import 'package:trivia_ui/game_rules_page.dart';
 import 'profile_page.dart';
 import 'login_page.dart';
 import 'sign_up_page.dart';
@@ -22,6 +24,8 @@ class TriviaApp extends StatelessWidget {
         '/profile': (context) => ProfilePage(),
         '/login': (context) => LoginPage(),
         '/signup': (context) => SignUpPage(),
+        '/play': (context) => GamePage(),
+        '/rules': (context) => GameRulesPage(),
       },
     );
   }
@@ -33,11 +37,11 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _jumpAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _jumpAnimation;
   late Color _currentColor;
   String? token;
-  int _selectedIndex = 0; // Default to the Home tab
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -48,13 +52,15 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
 
   Future<void> _loadToken() async {
     token = await AuthService().getToken();
-    setState(() {}); // Refresh UI after loading token
+    if (mounted) {
+      setState(() {}); // Update the state only if the widget is still mounted
+    }
   }
 
   void _initializeAnimations() {
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 400), // Duration for one jump cycle
+      duration: const Duration(milliseconds: 400),
     );
 
     _jumpAnimation = Tween<double>(begin: 0.0, end: -10.0)
@@ -85,10 +91,12 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
 
   void _startColorAnimation() async {
     while (mounted) {
-      await Future.delayed(Duration(milliseconds: 600));
-      setState(() {
-        _currentColor = _generateRandomColor();
-      });
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) {
+        setState(() {
+          _currentColor = _generateRandomColor();
+        });
+      }
     }
   }
 
@@ -97,14 +105,28 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
       _selectedIndex = index;
     });
 
-    if (index == 0) {
-      // Already on Home page
-    } else if (index == 1 && token != null) {
-      Navigator.pushReplacementNamed(context, '/profile');
-    } else if (index == 1 && token == null) {
-      Navigator.pushNamed(context, '/login');
+    switch (index) {
+      case 0: // Home
+        Navigator.pushReplacementNamed(context, '/');
+        break;
+
+      case 1: // Profile
+        if (token != null) {
+          Navigator.pushReplacementNamed(context, '/profile');
+        } else {
+          Navigator.pushNamed(context, '/login');
+        }
+        break;
+
+      case 2: // Rules
+        Navigator.pushNamed(context, '/rules');
+        break;
+
+      default:
+        break;
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -128,10 +150,13 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildAnimatedTitle(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildDescription(),
-            SizedBox(height: 40),
-            if (token == null) ..._buildLoggedOutButtons() else ..._buildLoggedInButtons(),
+            const SizedBox(height: 40),
+            if (token == null)
+              ..._buildLoggedOutButtons()
+            else
+              ..._buildLoggedInButtons(),
           ],
         ),
       ),
@@ -147,25 +172,30 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
           child: child,
         );
       },
-      child: AnimatedDefaultTextStyle(
-        duration: Duration(seconds: 2),
-        style: GoogleFonts.fredoka(
-          textStyle: TextStyle(
-            fontSize: 100,
-            color: _currentColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        child: Text("Brainzy"),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          double fontSize = constraints.maxWidth * 0.1; // Adjust the multiplier as needed
+          return AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 250),
+            style: TextStyle(
+                fontSize: 2 * fontSize.clamp(20.0, 75.0), // Clamp to a min/max range
+                fontFamily: 'Doto',
+                fontWeight: FontWeight.w900,
+                color: _currentColor
+            ),
+            child: const Text("Brainzy"),
+          );
+        },
       ),
+
     );
   }
 
   Widget _buildDescription() {
     return Text(
       "Test your knowledge and compete with others!",
-      style: GoogleFonts.poppins(
-        textStyle: TextStyle(
+      style: GoogleFonts.outfit(
+        textStyle: const TextStyle(
           fontSize: 16,
           color: Colors.white70,
         ),
@@ -177,14 +207,14 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
   List<Widget> _buildLoggedOutButtons() {
     return [
       _buildButton("Login", Colors.black, Colors.white, '/login'),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       _buildButton("Sign Up", Colors.white, Colors.black, '/signup'),
     ];
   }
 
   List<Widget> _buildLoggedInButtons() {
     return [
-      _buildButton("Play!", Colors.green, Colors.white, '/profile'),
+      _buildButton("Play!", Colors.green, Colors.white, '/play'),
     ];
   }
 
@@ -197,14 +227,14 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonColor,
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
         child: Text(
           text,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.outfit(
             textStyle: TextStyle(fontSize: 18, color: textColor),
           ),
         ),
@@ -216,7 +246,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
     return Stack(
       children: [
         Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/background.jpg'),
               fit: BoxFit.cover,
@@ -247,6 +277,12 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
             _selectedIndex == 1 ? Icons.person : Icons.person_outline,
           ),
           label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
+          ),
+          label: 'Rules',
         ),
       ],
       selectedItemColor: Colors.white,

@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthService {
   // Save token to local storage
@@ -36,4 +37,32 @@ class AuthService {
       return null;
     }
   }
+
+  bool isTokenExpired(String token) {
+    return JwtDecoder.isExpired(token);
+  }
+
+  void decodeToken(String token) {
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+  }
+
+  Duration getTokenRemainingTime(String token) {
+    DateTime? expirationDate = JwtDecoder.getExpirationDate(token);
+    if (expirationDate == null) {
+      throw Exception("Token does not have an expiration date.");
+    }
+    return expirationDate.difference(DateTime.now());
+  }
+
+  bool badToken(String token) {
+    bool tokenExpired = isTokenExpired(token);
+    if (tokenExpired) {
+    } else {
+      Duration remainingTime = getTokenRemainingTime(token);
+    }
+
+    return tokenExpired;
+  }
+
+
 }
