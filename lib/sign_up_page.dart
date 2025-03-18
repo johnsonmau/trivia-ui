@@ -7,6 +7,7 @@ import 'package:trivia_ui/custom_music_player.dart';
 import 'dart:convert';
 import 'auth_service.dart';
 import 'package:country_picker/country_picker.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class SignUpPage extends StatefulWidget {
@@ -134,7 +135,8 @@ class _SignUpPageState extends State<SignUpPage> {
     });
 
     try {
-      const String url = "http://localhost:8080/v1/auth/register";
+      final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      String url = baseUrl+"/v1/auth/register";
 
       final response = await http.post(
         Uri.parse(url),

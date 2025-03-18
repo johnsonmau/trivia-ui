@@ -7,6 +7,7 @@ import 'package:trivia_ui/custom_bottom_nav.dart';
 import 'package:http/http.dart' as http;
 import 'package:flag/flag.dart';
 import 'package:trivia_ui/custom_music_player.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LeaderboardPage extends StatefulWidget {
   @override
@@ -445,8 +446,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Future<void> getTop25() async {
-
-    const String url = "http://localhost:8080/v1/scores/leaders/25"; // Replace with your backend endpoint
+    final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+    String url = baseUrl+"/v1/scores/leaders/25"; // Replace with your backend endpoint
     final response = await http.get(
       Uri.parse(url),
       headers: {

@@ -5,6 +5,7 @@ import 'package:trivia_ui/custom_bottom_nav.dart';
 import 'package:trivia_ui/custom_music_player.dart';
 import 'dart:convert';
 import 'auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -83,7 +84,8 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      const String url = "http://localhost:8080/v1/auth/login";
+      final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      String url = baseUrl+"/v1/auth/login";
 
       final response = await http.post(
         Uri.parse(url),

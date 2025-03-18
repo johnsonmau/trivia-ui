@@ -12,9 +12,11 @@ import 'profile_page.dart';
 import 'login_page.dart';
 import 'sign_up_page.dart';
 import 'auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(); // Load environment variables
   runApp(
     ChangeNotifierProvider(
       create: (_) => AudioNotifier(),
