@@ -4,8 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:html_unescape/html_unescape.dart';
-import 'package:audioplayers/audioplayers.dart'; // Added for audio functionality
 import 'package:trivia_ui/animated_result_icon.dart';
+import 'package:trivia_ui/custom_bottom_nav.dart';
+import 'package:trivia_ui/custom_music_player.dart';
 import 'auth_service.dart';
 
 class GamePage extends StatefulWidget {
@@ -25,9 +26,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late Timer _gameTimer;
   late Timer _questionTimer;
-  late AudioPlayer _audioPlayer;
 
-  Duration _gameTimeRemaining = const Duration(seconds: 2);
+  Duration _gameTimeRemaining = const Duration(seconds: 90);
   Duration _questionTimeRemaining = const Duration(seconds: 15);
 
   late AnimationController _questionTimerController;
@@ -43,15 +43,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       duration: _questionTimeRemaining,
     );
 
-    _audioPlayer = AudioPlayer();
-    _audioPlayer.setReleaseMode(ReleaseMode.loop);
-
     _questionTimer = Timer(const Duration(seconds: 0), () {});
   }
 
   @override
   void dispose() {
-    _audioPlayer.stop();
     _gameTimer.cancel();
     _questionTimer.cancel();
     _questionTimerController.dispose();
@@ -80,13 +76,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     setState(() {
       isGameStarted = true;
     });
-    _playTimerMusic();
     _startGameTimer();
     _fetchNextQuestion();
-  }
-
-  void _playTimerMusic() async {
-    await _audioPlayer.play(AssetSource('assets/timer_music.wav'));
   }
 
   void _startGameTimer() {
@@ -111,6 +102,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         if (_questionTimeRemaining > const Duration(seconds: 1)) {
           _questionTimeRemaining -= const Duration(seconds: 1);
         } else {
+
+          if (_gameTimeRemaining > const Duration(seconds: 1)) {
+            _gameTimeRemaining -= const Duration(seconds: 1);
+          } else {
+            timer.cancel();
+          }
+
           timer.cancel();
           _skipQuestion();
         }
@@ -127,6 +125,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _fetchNextQuestion() async {
+
+    if (_gameTimeRemaining <= const Duration(seconds: 1)){
+      return;
+    }
+
     setState(() {
       isLoadingQuestion = true;
       isAnswerCorrect = null; // Reset answer status
@@ -135,8 +138,15 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     });
 
     try {
-      const String url = "http://localhost:8080/v1/questions/random"; // Replace with your API URL
-      final response = await http.get(Uri.parse(url));
+
+      const String url = "http://localhost:8080/v1/questions/random";
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
 
       if (response.statusCode == 200) {
         setState(() {
@@ -181,7 +191,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Future<void> _endGame() async {
     _gameTimer.cancel();
     _questionTimer.cancel();
-    _audioPlayer.stop();
 
     // Perform the API call to send game results
     try {
@@ -378,39 +387,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       ),
       bottomNavigationBar: isGameStarted
           ? null // Hides the bottom navigation bar when the game is active
-          : _buildBottomNavigationBar(),
+          : BottomNavBar(currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped, isAuthenticated: token != null)
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavigationTapped,
-      backgroundColor: Colors.blueGrey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
-          ),
-          label: 'Rules',
-        ),
-      ],
-      selectedItemColor: Colors.grey,
-      unselectedItemColor: Colors.grey,
-    );
-  }
 
   void _onBottomNavigationTapped(int index) {
     setState(() {
@@ -423,11 +404,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         break;
 
       case 1: // Profile
-        Navigator.pushReplacementNamed(context, '/profile');
+        if (token != null) {
+          Navigator.pushReplacementNamed(context, '/profile');
+        } else {
+          Navigator.pushNamed(context, '/login');
+        }
         break;
 
       case 2: // Rules
         Navigator.pushNamed(context, '/rules');
+        break;
+
+      case 3: // Rules
+        Navigator.pushNamed(context, '/leaderboard');
         break;
 
       default:

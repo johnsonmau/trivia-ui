@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:trivia_ui/custom_bottom_nav.dart';
+import 'package:trivia_ui/custom_music_player.dart';
 import 'dart:convert';
 import 'auth_service.dart';
 
@@ -20,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   String? _errorMessage;
   String? _successMessage;
   String? token;
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -106,6 +108,10 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _errorMessage = "Invalid username or password.";
         });
+      } else if (response.statusCode == 429) {
+        setState(() {
+          _errorMessage = "Too many attempts. Please try in a couple minutes.";
+        });
       } else {
         setState(() {
           _errorMessage = "An unexpected error occurred.";
@@ -142,6 +148,10 @@ class _LoginPageState extends State<LoginPage> {
 
       case 2: // Rules
         Navigator.pushNamed(context, '/rules');
+        break;
+
+      case 3: // Rules
+        Navigator.pushNamed(context, '/leaderboard');
         break;
 
       default:
@@ -195,6 +205,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         children: [
           _buildBackground(),
+          SimpleAudioPlayer(),
           Center(
             child: SingleChildScrollView(
               child: Padding(
@@ -298,7 +309,8 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped, isAuthenticated: token != null)
     );
   }
 
@@ -324,33 +336,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavigationTapped,
-      backgroundColor: Colors.blueGrey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
-          ),
-          label: 'Rules',
-        ),
-      ],
-      selectedItemColor: Colors.grey,
-      unselectedItemColor: Colors.grey,
-    );
-  }
 }

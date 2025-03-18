@@ -1,8 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:trivia_ui/audio_notifier.dart';
+import 'package:trivia_ui/custom_bottom_nav.dart';
+import 'package:trivia_ui/custom_music_player.dart';
 import 'package:trivia_ui/game_page.dart';
 import 'package:trivia_ui/game_rules_page.dart';
+import 'package:trivia_ui/leaderboard_page.dart';
 import 'profile_page.dart';
 import 'login_page.dart';
 import 'sign_up_page.dart';
@@ -10,7 +15,12 @@ import 'auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(TriviaApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AudioNotifier(),
+      child: TriviaApp(),
+    ),
+  );
 }
 
 class TriviaApp extends StatelessWidget {
@@ -26,6 +36,7 @@ class TriviaApp extends StatelessWidget {
         '/signup': (context) => SignUpPage(),
         '/play': (context) => GamePage(),
         '/rules': (context) => GameRulesPage(),
+        '/leaderboard': (context) => LeaderboardPage(),
       },
     );
   }
@@ -46,6 +57,8 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
+    final audioNotifier = Provider.of<AudioNotifier>(context, listen: false);
+    audioNotifier.loadUrl('/assets/galactic_rap.mp3');
     _loadToken();
     _initializeAnimations();
   }
@@ -122,6 +135,10 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
         Navigator.pushNamed(context, '/rules');
         break;
 
+      case 3: // Rules
+        Navigator.pushNamed(context, '/leaderboard');
+        break;
+
       default:
         break;
     }
@@ -137,7 +154,8 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
           _buildContent(),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped, isAuthenticated: token != null)
     );
   }
 
@@ -157,6 +175,8 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
               ..._buildLoggedOutButtons()
             else
               ..._buildLoggedInButtons(),
+            const SizedBox(height: 20),
+            SimpleAudioPlayer(),
           ],
         ),
       ),
@@ -260,33 +280,4 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavigationTapped,
-      backgroundColor: Colors.blueGrey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
-          ),
-          label: 'Rules',
-        ),
-      ],
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
-    );
-  }
 }

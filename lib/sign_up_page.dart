@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:trivia_ui/country_dropdown.dart';
+import 'package:trivia_ui/custom_bottom_nav.dart';
+import 'package:trivia_ui/custom_music_player.dart';
 import 'dart:convert';
 import 'auth_service.dart';
+import 'package:country_picker/country_picker.dart';
+
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -22,8 +26,9 @@ class _SignUpPageState extends State<SignUpPage> {
   String? token;
   String? _errorMessage;
   bool _isLoading = false;
+  Country? _selectedCountry;
 
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -60,6 +65,10 @@ class _SignUpPageState extends State<SignUpPage> {
         Navigator.pushNamed(context, '/rules');
         break;
 
+      case 3: // Rules
+        Navigator.pushNamed(context, '/leaderboard');
+        break;
+
       default:
         break;
     }
@@ -67,8 +76,15 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> _signUp() async {
 
+    var country = _selectedCountry;
+    var countryCd = "unset";
+
+    if (country != null){
+      countryCd = country.countryCode;
+    }
+
     bool requiredFields = _passwordController.text.trim().length == 0 || _confirmPasswordController.text.trim().length == 0
-        || _usernameController.text.trim().length == 0 || _passwordController.text.trim().length == 0;
+        || _usernameController.text.trim().length == 0 || countryCd == "unset";
 
     if (requiredFields){
       setState(() {
@@ -84,9 +100,9 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    if (_usernameController.text.trim().length < 5){
+    if (_usernameController.text.trim().length > 10){
       setState(() {
-        _errorMessage = "Username must be at least 5 characters.";
+        _errorMessage = "Username can't be greater than 10 characters.";
       });
       return;
     }
@@ -94,6 +110,20 @@ class _SignUpPageState extends State<SignUpPage> {
     if (_passwordController.text.trim().length < 6){
       setState(() {
         _errorMessage = "Password must be at least 6 characters.";
+      });
+      return;
+    }
+
+    if (_passwordController.text.trim().contains(" ")){
+      setState(() {
+        _errorMessage = "Password cannot contain spaces.";
+      });
+      return;
+    }
+
+    if (_usernameController.text.trim().contains(" ")){
+      setState(() {
+        _errorMessage = "Username cannot contain spaces.";
       });
       return;
     }
@@ -112,6 +142,7 @@ class _SignUpPageState extends State<SignUpPage> {
         body: json.encode({
           "username": _usernameController.text,
           "password": _passwordController.text,
+          "country": countryCd
         }),
       );
 
@@ -121,6 +152,11 @@ class _SignUpPageState extends State<SignUpPage> {
           '/login',
           arguments: "Account created successfully! Please log in.",
         );
+      }
+      else if (response.statusCode == 429) {
+        setState(() {
+          _errorMessage = "Too many attempts. Please try in a couple minutes.";
+        });
       } else {
         setState(() {
           _errorMessage = json.decode(response.body)['error'] ?? "Sign-up failed.";
@@ -185,6 +221,7 @@ class _SignUpPageState extends State<SignUpPage> {
       body: Stack(
         children: [
           _buildBackground(),
+          SimpleAudioPlayer(),
           Center(
             child: SingleChildScrollView(
               child: Padding(
@@ -236,7 +273,13 @@ class _SignUpPageState extends State<SignUpPage> {
                     SizedBox(height: 20),
                     _buildTextField("confirm password", _confirmPasswordController, true, _confirmPasswordFocus, null),
                     SizedBox(height: 20),
-                    CountryDropdown(),
+                    CountryDropdown(
+                      onCountrySelected: (country) {
+                        setState(() {
+                          _selectedCountry = country;
+                        });
+                      },
+                    ),
                     SizedBox(height: 40),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _signUp,
@@ -282,7 +325,8 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped, isAuthenticated: token != null)
     );
   }
 
@@ -308,33 +352,4 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavigationTapped,
-      backgroundColor: Colors.blueGrey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
-          ),
-          label: 'Rules',
-        ),
-      ],
-      selectedItemColor: Colors.grey,
-      unselectedItemColor: Colors.grey,
-    );
-  }
 }

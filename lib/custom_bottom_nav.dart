@@ -1,37 +1,49 @@
 import 'package:flutter/material.dart';
 
-class CustomBottomNav extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTap;
+class BottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTap;
+  final isAuthenticated;
 
-  const CustomBottomNav({
+  BottomNavBar({
     Key? key,
-    required this.selectedIndex,
+    required this.currentIndex,
     required this.onTap,
+    required this.isAuthenticated
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      onTap: onTap,
-      backgroundColor: Colors.blueGrey,
-      items: [
+      currentIndex: currentIndex,
+      onTap: (index) {
+        onTap(index);
+      },
+      type: BottomNavigationBarType.fixed, // Ensure all items are shown
+      backgroundColor: Colors.transparent,
+      items: const [
         BottomNavigationBarItem(
-          icon: Icon(
-            selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home_filled),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(
-            selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
           label: 'Profile',
         ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.format_list_numbered),
+          label: 'Rules',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.connect_without_contact),
+          label: 'Leaderboard',
+        ),
       ],
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
+      selectedItemColor: Colors.teal,
+      unselectedItemColor: Colors.black,
     );
   }
+
 }

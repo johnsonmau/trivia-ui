@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:trivia_ui/custom_bottom_nav.dart';
+import 'package:trivia_ui/custom_music_player.dart';
 import 'auth_service.dart';
 import 'dart:async';
-import 'dart:math';
+import 'package:flag/flag.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -15,6 +16,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isAuthenticated = false;
   bool _isLoading = true;
   String username = "Unknown User";
+  String countryCd = "Unknown Country Code";
   int _selectedIndex = 1; // Default to Profile tab
   bool _isAscending = true; // Default sorting direction
   String _sortColumn = 'score'; // Default sort by 'score'
@@ -42,6 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         username = userDetails['username'] ?? "Unknown User";
         scores = userDetails['scores'];
+        countryCd = userDetails['country'];
         _isAuthenticated = true;
         _isLoading = false;
       });
@@ -234,6 +237,10 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushNamed(context, '/rules');
         break;
 
+      case 3: // Rules
+        Navigator.pushNamed(context, '/leaderboard');
+        break;
+
       default:
         break;
     }
@@ -259,7 +266,8 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildContent(),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped, isAuthenticated: _isAuthenticated)
     );
   }
 
@@ -273,6 +281,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   PreferredSizeWidget _buildTransparentAppBar() {
     return AppBar(
+      automaticallyImplyLeading: false, // Hides the back button if present
       backgroundColor: Colors.transparent,
       elevation: 0,
       actions: [
@@ -660,21 +669,49 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildWelcomeMessage() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double fontSize = constraints.maxWidth * 0.15; // Adjusted multiplier for scaling
+        // Dynamically calculate font and flag sizes based on screen width
+        double fontSize = constraints.maxWidth * 0.08; // Adjusted multiplier for scaling
+        double flagHeight = (fontSize * 0.8).clamp(16.0, 40.0); // Clamp height between 16 and 40
+        double flagWidth = (flagHeight * 1.5).clamp(24.0, 60.0); // Clamp width proportionally
 
-        return Text(
-          "Welcome, $username!",
-          style: TextStyle(
-            fontSize: fontSize.clamp(35.0, 50.0), // Adjust min/max clamp range
-            fontFamily: 'Doto',
-            fontWeight: FontWeight.w900,
-            color: Colors.white
-          ),
-          textAlign: TextAlign.center,
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                "Welcome, $username",
+                style: TextStyle(
+                  fontSize: fontSize.clamp(20.0, 50.0), // Minimum and maximum size
+                  fontFamily: 'Doto',
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+                softWrap: true,
+              ),
+            ),
+            const SizedBox(width: 4),
+            if (countryCd.isNotEmpty)
+              Flexible(
+                child: SizedBox(
+                  height: flagHeight,
+                  width: flagWidth,
+                  child: Flag.fromString(
+                    countryCd,
+                    height: flagHeight,
+                    width: flagWidth,
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
   }
+
+
+
+
 
   Widget _buildPlayButton() {
     return ElevatedButton(
@@ -694,36 +731,6 @@ class _ProfilePageState extends State<ProfilePage> {
           textStyle: TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavigationTapped,
-      backgroundColor: Colors.blueGrey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
-          ),
-          label: 'Rules',
-        ),
-      ],
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
     );
   }
 

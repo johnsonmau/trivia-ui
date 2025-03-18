@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trivia_ui/auth_service.dart';
+import 'package:trivia_ui/custom_bottom_nav.dart';
+import 'package:trivia_ui/custom_music_player.dart';
 
 class GameRulesPage extends StatefulWidget {
   @override
@@ -11,16 +13,14 @@ class _GameRulesPageState extends State<GameRulesPage> {
 
   @override
   void initState() {
-    _checkAuthentication();
+    _loadToken();
     super.initState();
   }
 
-  bool _isAuthenticated = false;
+  String? token;
   int _selectedIndex = 2; // Default to Rules tab
 
   void _onBottomNavigationTapped(int index) {
-    if (index == _selectedIndex) return; // Prevent unnecessary rebuilds
-
     setState(() {
       _selectedIndex = index;
     });
@@ -31,15 +31,19 @@ class _GameRulesPageState extends State<GameRulesPage> {
         break;
 
       case 1: // Profile
-        if (_isAuthenticated) {
+        if (token != null) {
           Navigator.pushReplacementNamed(context, '/profile');
-          break;
+        } else {
+          Navigator.pushNamed(context, '/login');
         }
-        Navigator.pushReplacementNamed(context, '/login');
         break;
 
       case 2: // Rules
-      // Stay on the current page
+        Navigator.pushNamed(context, '/rules');
+        break;
+
+      case 3: // Rules
+        Navigator.pushNamed(context, '/leaderboard');
         break;
 
       default:
@@ -61,6 +65,7 @@ class _GameRulesPageState extends State<GameRulesPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    //SimpleAudioPlayer(),
                     //_buildTitle(),
                     const SizedBox(height: 20),
                     _buildSection(
@@ -95,7 +100,8 @@ class _GameRulesPageState extends State<GameRulesPage> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped, isAuthenticated: token != null),
     );
   }
 
@@ -120,12 +126,11 @@ class _GameRulesPageState extends State<GameRulesPage> {
   Widget _buildTitle() {
     return Text(
       "Game Rules",
-      style: GoogleFonts.coiny(
-        textStyle: const TextStyle(
+      style: TextStyle(
           fontSize: 48,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
+          fontFamily: 'Doto',
+          fontWeight: FontWeight.w900,
+        color: Colors.white,
       ),
       textAlign: TextAlign.center,
     );
@@ -189,53 +194,62 @@ class _GameRulesPageState extends State<GameRulesPage> {
     ];
 
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: feedbackList.map((feedback) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                  feedback['scoreRange'] as String ,
-                  style: TextStyle(
-                      fontSize: 16,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double fontSize = width * 0.04; // Adjust multiplier as needed
+        final double iconSize = width * 0.08; // Adjust multiplier as needed
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: feedbackList.map((feedback) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    feedback['scoreRange'] as String,
+                    style: TextStyle(
+                      fontSize: fontSize.clamp(12, 24), // Minimum and maximum font size
                       fontFamily: 'Doto',
                       fontWeight: FontWeight.w900,
-                      color: feedback['color'] as Color
-                  )
-              ),
-              Text(
-                  " pts = " ,
-                  style: TextStyle(
-                      fontSize: 16,
+                      color: feedback['color'] as Color,
+                    ),
+                  ),
+                  Text(
+                    " pts = ",
+                    style: TextStyle(
+                      fontSize: fontSize.clamp(12, 24),
                       fontFamily: 'Doto',
                       fontWeight: FontWeight.w900,
-                      color: feedback['color'] as Color
-                  )
+                      color: feedback['color'] as Color,
+                    ),
+                  ),
+                  Icon(
+                    feedback['icon'] as IconData,
+                    color: feedback['color'] as Color,
+                    size: iconSize.clamp(24, 48), // Minimum and maximum icon size
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    feedback['description'] as String,
+                    style: TextStyle(
+                      fontSize: fontSize.clamp(12, 24),
+                      fontFamily: 'Doto',
+                      fontWeight: FontWeight.w900,
+                      color: feedback['color'] as Color,
+                    ),
+                  ),
+                ],
               ),
-              Icon(
-                feedback['icon'] as IconData,
-                color: feedback['color'] as Color,
-                size: 32,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                feedback['description'] as String,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Doto',
-                    fontWeight: FontWeight.w900,
-                    color: feedback['color'] as Color
-                )
-              ),
-            ],
-          ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
+
   }
 
   Widget _buildStartButton(BuildContext context) {
@@ -259,48 +273,11 @@ class _GameRulesPageState extends State<GameRulesPage> {
     );
   }
 
-  Future<void> _checkAuthentication() async {
-    String? token = await AuthService().getToken();
-    if (token == null || token.isEmpty) {
-      return;
+  Future<void> _loadToken() async {
+    token = await AuthService().getToken();
+    if (mounted) {
+      setState(() {}); // Update the state only if the widget is still mounted
     }
-
-    Map<String, dynamic>? userDetails = await AuthService().getUserDetails(token);
-    if (userDetails != null) {
-      setState(() {
-        _isAuthenticated = true;
-      });
-    }
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavigationTapped,
-      backgroundColor: Colors.blueGrey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.person : Icons.person_outline,
-          ),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            _selectedIndex == 1 ? Icons.format_list_numbered : Icons.format_list_numbered,
-          ),
-          label: 'Rules',
-        ),
-      ],
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
-    );
   }
 
 }

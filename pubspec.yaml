@@ -37,7 +37,7 @@ dependencies:
   jwt_decoder: any
   flutter_html: any
   html_unescape: any
-  audioplayers: any
+  just_audio: any
   flutter_countries: any
   country_picker: any
   flag: any
@@ -71,7 +71,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/background.jpg
-    - assets/timer_music.wav
+    - assets/galactic_rap.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

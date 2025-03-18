@@ -3,7 +3,12 @@ import 'package:country_picker/country_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flag/flag.dart';
 
+
 class CountryDropdown extends StatefulWidget {
+  final ValueChanged<Country> onCountrySelected;
+
+  CountryDropdown({required this.onCountrySelected});
+
   @override
   _CountryDropdownState createState() => _CountryDropdownState();
 }
@@ -20,46 +25,40 @@ class _CountryDropdownState extends State<CountryDropdown> {
         return Center(
           child: Container(
             width: dropdownWidth,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () {
-                    _showCountryPicker(context);
-                  },
-                  child: Container(
-                    width: dropdownWidth,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25), // Rounded corners for a modern look
-                      color: Colors.white12,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: GestureDetector(
+              onTap: () {
+                _showCountryPicker(context);
+              },
+              child: Container(
+                width: dropdownWidth,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  color: Colors.white12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            if (_selectedCountry != null)
-                              Flag.fromString(_selectedCountry!.countryCode, height: 20, width: 30),
-                            const SizedBox(width: 8),
-                            Text(
-                              _selectedCountry?.name ?? "country",
-                              style: GoogleFonts.outfit(
-                                textStyle: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white54,
-                                ),
-                              ),
+                        if (_selectedCountry != null)
+                          Flag.fromString(_selectedCountry!.countryCode, height: 20, width: 30),
+                        const SizedBox(width: 8),
+                        Text(
+                          _selectedCountry?.name ?? "Country",
+                          style: GoogleFonts.outfit(
+                            textStyle: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white54,
                             ),
-                          ],
+                          ),
                         ),
-                        const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
                       ],
                     ),
-                  ),
+                    const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -75,6 +74,7 @@ class _CountryDropdownState extends State<CountryDropdown> {
         setState(() {
           _selectedCountry = country;
         });
+        widget.onCountrySelected(country);
       },
       countryListTheme: CountryListThemeData(
         inputDecoration: InputDecoration(
