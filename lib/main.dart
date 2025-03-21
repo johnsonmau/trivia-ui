@@ -28,6 +28,7 @@ class TriviaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: "Brainzzy",
       debugShowCheckedModeBanner: false,
       initialRoute: '/', // Always start at the LandingPage
       routes: {
