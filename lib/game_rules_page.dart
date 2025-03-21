@@ -70,7 +70,7 @@ class _GameRulesPageState extends State<GameRulesPage> {
                     const SizedBox(height: 20),
                     _buildSection(
                       "Objective",
-                      "Answer as many questions correctly as you can in the 2-minute game duration. Each question has a difficulty level that impacts your score.",
+                      "Answer as many questions correctly as you can in the 1 minute 30 seconds game duration. Each question has a difficulty level that impacts your score.",
                     ),
                     const SizedBox(height: 20),
                     _buildSection(
