@@ -161,28 +161,37 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
   }
 
   Widget _buildContent() {
-    return Center(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildAnimatedTitle(),
-            const SizedBox(height: 20),
-            _buildDescription(),
-            const SizedBox(height: 40),
-            if (token == null)
-              ..._buildLoggedOutButtons()
-            else
-              ..._buildLoggedInButtons(),
-            const SizedBox(height: 20),
-            SimpleAudioPlayer(),
-          ],
+    return Stack(
+      children: [
+        Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildAnimatedTitle(),
+                const SizedBox(height: 20),
+                _buildDescription(),
+                const SizedBox(height: 40),
+                if (token == null)
+                  ..._buildLoggedOutButtons()
+                else
+                  ..._buildLoggedInButtons(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ),
-      ),
+        Positioned(
+          bottom: 16.0,
+          right: 16.0,
+          child: SimpleAudioPlayer(),
+        ),
+      ],
     );
   }
+
 
   Widget _buildAnimatedTitle() {
     return AnimatedBuilder(

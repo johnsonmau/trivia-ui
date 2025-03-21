@@ -385,6 +385,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           isGameStarted
               ? (isLoadingQuestion ? const Center(child: CircularProgressIndicator()) : _buildQuestionContent())
               : _buildStartContent(),
+          Positioned(
+            bottom: 16.0,
+            right: 16.0,
+            child: SimpleAudioPlayer(),
+          ),
         ],
       ),
       bottomNavigationBar: isGameStarted

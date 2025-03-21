@@ -207,7 +207,6 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         children: [
           _buildBackground(),
-          SimpleAudioPlayer(),
           Center(
             child: SingleChildScrollView(
               child: Padding(
@@ -308,6 +307,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
+          ),
+          Positioned(
+            bottom: 16.0,
+            right: 16.0,
+            child: SimpleAudioPlayer(),
           ),
         ],
       ),

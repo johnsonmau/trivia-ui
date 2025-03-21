@@ -80,6 +80,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               ),
             ),
           ),
+          Positioned(
+            bottom: 16.0,
+            right: 16.0,
+            child: SimpleAudioPlayer(),
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,

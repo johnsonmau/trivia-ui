@@ -266,6 +266,11 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _buildBackground(),
           _buildContent(),
+          Positioned(
+            bottom: 16.0,
+            right: 16.0,
+            child: SimpleAudioPlayer(),
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex,
