@@ -213,7 +213,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                 fontWeight: FontWeight.w900,
                 color: _currentColor
             ),
-            child: const Text("Brainzy"),
+            child: const Text("Brainzzy"),
           );
         },
       ),
