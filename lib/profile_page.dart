@@ -6,7 +6,7 @@ import 'package:trivia_ui/custom_music_player.dart';
 import 'auth_service.dart';
 import 'dart:async';
 import 'package:flag/flag.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -62,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       String? token = await AuthService().getToken();
       if (token != null) {
-        final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+        final String baseUrl = const String.fromEnvironment("url_base");
         String url = baseUrl+"/v1/auth/delete"; // Replace with your backend endpoint
         final response = await http.delete(
           Uri.parse(url),

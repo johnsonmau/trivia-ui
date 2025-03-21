@@ -8,7 +8,7 @@ import 'package:trivia_ui/animated_result_icon.dart';
 import 'package:trivia_ui/custom_bottom_nav.dart';
 import 'package:trivia_ui/custom_music_player.dart';
 import 'auth_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class GamePage extends StatefulWidget {
   @override
@@ -139,7 +139,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     });
 
     try {
-      final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      final String baseUrl = const String.fromEnvironment("url_base");
       String url = baseUrl+"/v1/questions/random";
       final response = await http.get(
         Uri.parse(url),
@@ -195,7 +195,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     // Perform the API call to send game results
     try {
-      final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      final String baseUrl = const String.fromEnvironment("url_base");
       String apiUrl = baseUrl+"/v1/scores/save"; // Replace with your actual API URL
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -531,7 +531,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     bool isCorrect = false;
 
     try {
-      final String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      final String baseUrl = const String.fromEnvironment("url_base");
       String apiUrl = baseUrl+"/v1/questions/solve"; // Replace with your actual API URL
       final response = await http.post(
         Uri.parse(apiUrl),
