@@ -498,23 +498,29 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             },
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-          ElevatedButton(
-            onPressed: _startGame,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: EdgeInsets.symmetric(
-                vertical: MediaQuery.of(context).size.height * 0.02,
-                horizontal: MediaQuery.of(context).size.width * 0.08,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 300,  // Maximum width for the button
+              maxHeight: 60,  // Maximum height for the button
             ),
-            child: Text(
-              "Start Game",
-              style: GoogleFonts.outfit(
-                fontSize: MediaQuery.of(context).size.width * 0.045,
-                color: Colors.white,
+            child: ElevatedButton(
+              onPressed: _startGame,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: EdgeInsets.symmetric(
+                  vertical: (MediaQuery.of(context).size.height * 0.02).clamp(10.0, 20.0),  // Clamp vertical padding
+                  horizontal: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 40.0), // Clamp horizontal padding
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                "Start Game",
+                style: GoogleFonts.outfit(
+                  fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 24.0), // Clamp font size
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
