@@ -23,7 +23,7 @@ class _CustomAudioPlayerState extends State<SimpleAudioPlayer> {
       children: [
         // -- PLAY/PAUSE BUTTON --
         IconButton(
-          iconSize: 30,
+          iconSize: 17,
           icon: Icon(
             isPlaying ? Icons.volume_up : Icons.volume_off,
             color: Colors.white,

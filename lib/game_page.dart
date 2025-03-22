@@ -8,7 +8,7 @@ import 'package:trivia_ui/animated_result_icon.dart';
 import 'package:trivia_ui/custom_bottom_nav.dart';
 import 'package:trivia_ui/custom_music_player.dart';
 import 'auth_service.dart';
-
+import 'package:auto_size_text/auto_size_text.dart';
 
 class GamePage extends StatefulWidget {
   @override
@@ -103,13 +103,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         if (_questionTimeRemaining > const Duration(seconds: 1)) {
           _questionTimeRemaining -= const Duration(seconds: 1);
         } else {
-
           if (_gameTimeRemaining > const Duration(seconds: 1)) {
             _gameTimeRemaining -= const Duration(seconds: 1);
           } else {
             timer.cancel();
           }
-
           timer.cancel();
           _skipQuestion();
         }
@@ -126,21 +124,18 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   Future<void> _fetchNextQuestion() async {
-
-    if (_gameTimeRemaining <= const Duration(seconds: 1)){
-      return;
-    }
+    if (_gameTimeRemaining <= const Duration(seconds: 1)) return;
 
     setState(() {
       isLoadingQuestion = true;
-      isAnswerCorrect = null; // Reset answer status
-      showOptions = true; // Show options again for the next question
-      isAnswering = false; // Reset answering status
+      isAnswerCorrect = null;
+      showOptions = true;
+      isAnswering = false;
     });
 
     try {
       final String baseUrl = const String.fromEnvironment("url_base");
-      String url = baseUrl+"/v1/questions/random";
+      String url = "$baseUrl/v1/questions/random";
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -193,26 +188,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _gameTimer.cancel();
     _questionTimer.cancel();
 
-    // Perform the API call to send game results
     try {
       final String baseUrl = const String.fromEnvironment("url_base");
-      String apiUrl = baseUrl+"/v1/scores/save"; // Replace with your actual API URL
-      final response = await http.post(
+      String apiUrl = "$baseUrl/v1/scores/save";
+      await http.post(
         Uri.parse(apiUrl),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: json.encode({
-          'score': userScore
-        }),
+        body: json.encode({'score': userScore}),
       );
+    } catch (e) {}
 
-    } catch (e) {
-
-    }
-
-    // Show the game-over dialog
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -223,87 +211,102 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           child: Material(
             color: Colors.transparent,
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.7,
-              padding: const EdgeInsets.all(24),
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.4,
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
               decoration: BoxDecoration(
                 color: Colors.black87,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    offset: Offset(0, 10),
                   ),
                 ],
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 16),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       return Text(
                         "GAME OVER",
                         style: TextStyle(
-                            fontSize: constraints.maxWidth * 0.08,
-                            fontFamily: 'Doto',
-                            fontWeight: FontWeight.w900,
+                          fontSize: constraints.maxWidth * 0.1,
+                          fontFamily: 'Doto',
+                          fontWeight: FontWeight.w900,
                           color: Colors.redAccent,
-                        )
+                        ),
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
                   Text(
                     "Your Score: $userScore",
                     style: GoogleFonts.outfit(
-                      fontSize: 25,
+                      fontSize: MediaQuery.of(context).size.width * 0.06,
                       fontWeight: FontWeight.bold,
                       color: Colors.blueGrey,
                     ),
                   ),
-                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Profile Button
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamedAndRemoveUntil(context, '/profile', (route) => false);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamedAndRemoveUntil(
+                                context, '/profile', (route) => false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            padding: EdgeInsets.symmetric(
+                              horizontal:
+                              MediaQuery.of(context).size.width * 0.05,
+                              vertical:
+                              MediaQuery.of(context).size.height * 0.015,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          "Profile",
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            color: Colors.white,
+                          child: Text(
+                            "Profile",
+                            style: GoogleFonts.outfit(
+                              fontSize:
+                              MediaQuery.of(context).size.width * 0.04,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
-                      // Play Again Button
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamedAndRemoveUntil(context, '/play', (route) => false);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamedAndRemoveUntil(
+                                context, '/play', (route) => false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: EdgeInsets.symmetric(
+                              horizontal:
+                              MediaQuery.of(context).size.width * 0.05,
+                              vertical:
+                              MediaQuery.of(context).size.height * 0.015,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          "Play Again",
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            color: Colors.white,
+                          child: Text(
+                            "Play Again",
+                            style: GoogleFonts.outfit(
+                              fontSize:
+                              MediaQuery.of(context).size.width * 0.04,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -318,9 +321,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     );
   }
 
-
-
-
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -330,9 +330,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           content: Text(message),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text("OK"),
             ),
           ],
@@ -355,16 +353,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Customize the back arrow
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () async {
             if (isGameStarted) {
-              // Show confirmation dialog
               bool shouldExit = await _showExitConfirmationDialog();
-              if (shouldExit) {
-                Navigator.pop(context); // Navigate back if confirmed
-              }
+              if (shouldExit) Navigator.pop(context);
             } else {
-              Navigator.pop(context); // Default behavior if no game is active
+              Navigator.pop(context);
             }
           },
         ),
@@ -379,26 +374,33 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               ),
             ),
           ),
-          Container(
-            color: Colors.black.withOpacity(0.6),
+          Container(color: Colors.black.withOpacity(0.6)),
+          SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height,
+              width: MediaQuery.of(context).size.width,
+              child: isGameStarted
+                  ? (isLoadingQuestion
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildQuestionContent())
+                  : _buildStartContent(),
+            ),
           ),
-          isGameStarted
-              ? (isLoadingQuestion ? const Center(child: CircularProgressIndicator()) : _buildQuestionContent())
-              : _buildStartContent(),
           Positioned(
-            bottom: 16.0,
-            right: 16.0,
+            bottom: MediaQuery.of(context).size.height * 0.02,
+            right: MediaQuery.of(context).size.width * 0.04,
             child: SimpleAudioPlayer(),
           ),
         ],
       ),
       bottomNavigationBar: isGameStarted
-          ? null // Hides the bottom navigation bar when the game is active
-          : BottomNavBar(currentIndex: _selectedIndex,
-          onTap: _onBottomNavigationTapped, isAuthenticated: token != null)
+          ? null
+          : BottomNavBar(
+          currentIndex: _selectedIndex,
+          onTap: _onBottomNavigationTapped,
+          isAuthenticated: token != null),
     );
   }
-
 
   void _onBottomNavigationTapped(int index) {
     setState(() {
@@ -406,27 +408,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     });
 
     switch (index) {
-      case 0: // Home
+      case 0:
         Navigator.pushReplacementNamed(context, '/');
         break;
-
-      case 1: // Profile
-        if (token != null) {
-          Navigator.pushReplacementNamed(context, '/profile');
-        } else {
-          Navigator.pushNamed(context, '/login');
-        }
+      case 1:
+        token != null
+            ? Navigator.pushReplacementNamed(context, '/profile')
+            : Navigator.pushNamed(context, '/login');
         break;
-
-      case 2: // Rules
+      case 2:
         Navigator.pushNamed(context, '/rules');
         break;
-
-      case 3: // Rules
+      case 3:
         Navigator.pushNamed(context, '/leaderboard');
-        break;
-
-      default:
         break;
     }
   }
@@ -434,14 +428,14 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Future<bool> _showExitConfirmationDialog() async {
     return await showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismiss by tapping outside
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.black87,
           title: Text(
             "Exit Game?",
             style: GoogleFonts.outfit(
-              fontSize: 18,
+              fontSize: MediaQuery.of(context).size.width * 0.05,
               fontWeight: FontWeight.bold,
               color: Colors.redAccent,
             ),
@@ -449,17 +443,17 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           content: Text(
             "Are you sure you want to exit? Your progress will be lost.",
             style: GoogleFonts.outfit(
-              fontSize: 16,
+              fontSize: MediaQuery.of(context).size.width * 0.04,
               color: Colors.white70,
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Stay in the game
+              onPressed: () => Navigator.of(context).pop(false),
               child: Text(
                 "Cancel",
                 style: GoogleFonts.outfit(
-                  fontSize: 14,
+                  fontSize: MediaQuery.of(context).size.width * 0.035,
                   color: Colors.green,
                 ),
               ),
@@ -468,11 +462,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
               ),
-              onPressed: () => Navigator.of(context).pop(true), // Exit the game
+              onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 "Exit",
                 style: GoogleFonts.outfit(
-                  fontSize: 14,
+                  fontSize: MediaQuery.of(context).size.width * 0.035,
                   color: Colors.white,
                 ),
               ),
@@ -481,9 +475,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         );
       },
     ) ??
-        false; // Return false if dialog is dismissed
+        false;
   }
-
 
   Widget _buildStartContent() {
     return Center(
@@ -492,25 +485,27 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              double fontSize = constraints.maxWidth * 0.08; // Adjust the multiplier as needed
+              double fontSize = constraints.maxWidth * 0.08;
               return Text(
                 "Game Time!",
                 style: TextStyle(
-                  fontSize: 1.3* fontSize.clamp(24.0, 48.0), // Clamp to a min/max range
-                    fontFamily: 'Doto',
-                    fontWeight: FontWeight.w900,
+                  fontSize: fontSize.clamp(24.0, 48.0),
+                  fontFamily: 'Doto',
+                  fontWeight: FontWeight.w900,
                   color: Colors.white,
-                )
+                ),
               );
             },
           ),
-
-          const SizedBox(height: 20),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.03),
           ElevatedButton(
             onPressed: _startGame,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+              padding: EdgeInsets.symmetric(
+                vertical: MediaQuery.of(context).size.height * 0.02,
+                horizontal: MediaQuery.of(context).size.width * 0.08,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -518,10 +513,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             child: Text(
               "Start Game",
               style: GoogleFonts.outfit(
-                textStyle: TextStyle(fontSize: 18, color: Colors.white),
+                fontSize: MediaQuery.of(context).size.width * 0.045,
+                color: Colors.white,
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -530,35 +526,26 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Future<void> _verifyAnswer(String selectedOption) async {
     setState(() {
       isAnswering = true;
-      showOptions = true; // Keep options visible briefly for smooth transition
+      showOptions = true;
     });
 
     bool isCorrect = false;
-
     try {
       final String baseUrl = const String.fromEnvironment("url_base");
-      String apiUrl = baseUrl+"/v1/questions/solve"; // Replace with your actual API URL
+      String apiUrl = "$baseUrl/v1/questions/solve";
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: json.encode({
-          'qid': currentQuestion!["id"],
-          'guess': selectedOption
-        }),
+        body: json.encode({'qid': currentQuestion!["id"], 'guess': selectedOption}),
       );
-
       isCorrect = json.decode(response.body)!["correctAnswer"];
-
-    } catch (e) {
-
-    }
+    } catch (e) {}
 
     setState(() {
       isAnswerCorrect = isCorrect;
-
       if (isCorrect) {
         int baseScore = _calculateBaseScore(currentQuestion!["difficulty"]);
         double timeMultiplier = _questionTimeRemaining.inSeconds / 15.0;
@@ -566,14 +553,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       }
     });
 
-    // Add a delay before hiding the options
-   // await Future.delayed(const Duration(seconds: 1));
-
-    setState(() {
-      showOptions = false;
-    });
-
-    // Fetch the next question after a short delay
+    setState(() => showOptions = false);
     Future.delayed(const Duration(milliseconds: 500), _fetchNextQuestion);
   }
 
@@ -589,113 +569,157 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     final unescape = HtmlUnescape();
     final unescapedQuestion = unescape.convert(currentQuestion!["question"]);
-    final options = List<String>.from(currentQuestion!["allAnswers"].map((option) => unescape.convert(option)));
+    final options = List<String>.from(
+        currentQuestion!["allAnswers"].map((option) => unescape.convert(option)));
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        final availableWidth = constraints.maxWidth;
+
+        // Calculate dynamic sizes based on available space
+        final scoreFontSize = availableWidth * 0.09;
+        final timerFontSize = availableWidth * 0.045;
+        final questionFontSize = availableWidth * 0.06;
+        final optionFontSize = availableWidth * 0.045;
+        final timerSize = availableWidth * 0.2;
+        final buttonHeight = availableHeight * 0.1;
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "Score: $userScore",
-              style: TextStyle(
-                fontSize: 35,
-                color: Colors.white,
-                fontFamily: 'Doto',
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 50),
-            Text(
-              "Game Timer: ${_formatDuration(_gameTimeRemaining)}",
-              style: GoogleFonts.outfit(
-                textStyle: const TextStyle(fontSize: 18, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Stack(
-              alignment: Alignment.center,
+            // Top section: Score and Timers
+            Column(
               children: [
-                SizedBox(
-                  height: 75,
-                  width: 75,
-                  child: CircularProgressIndicator(
-                    value: _questionTimerController.value,
-                    strokeWidth: 15,
-                    color: Colors.red,
-                    backgroundColor: Colors.grey,
+                SizedBox(height: availableHeight * 0.02),
+                Text(
+                  "Score: $userScore",
+                  style: TextStyle(
+                    fontSize: scoreFontSize.clamp(20.0, 35.0),
+                    color: Colors.white,
+                    fontFamily: 'Doto',
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
+                SizedBox(height: availableHeight * 0.015),
                 Text(
-                  "${_questionTimeRemaining.inSeconds}",
+                  "Game Timer: ${_formatDuration(_gameTimeRemaining)}",
                   style: GoogleFonts.outfit(
-                    textStyle: const TextStyle(fontSize: 26, color: Colors.white),
+                    fontSize: timerFontSize.clamp(12.0, 18.0),
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: availableHeight * 0.015),
+                SizedBox(
+                  height: timerSize.clamp(50.0, 75.0),
+                  width: timerSize.clamp(50.0, 75.0),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: _questionTimerController.value,
+                        strokeWidth: 10,
+                        color: Colors.red,
+                        backgroundColor: Colors.grey,
+                      ),
+                      Text(
+                        "${_questionTimeRemaining.inSeconds}",
+                        style: GoogleFonts.outfit(
+                          fontSize: (timerSize * 0.35).clamp(16.0, 26.0),
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              unescapedQuestion,
-              style: GoogleFonts.outfit(
-                textStyle: const TextStyle(
-                  fontSize: 24,
+
+            // Middle section: Question
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: availableWidth * 0.05),
+              child: AutoSizeText(
+                unescapedQuestion,
+                style: GoogleFonts.outfit(
+                  fontSize: questionFontSize.clamp(16.0, 24.0),
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                minFontSize: 12,
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-            AnimatedOpacity(
-              opacity: showOptions ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 500),
+
+            // Bottom section: Options and Result
+            Flexible(
               child: Column(
-                children: options.map((option) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: ElevatedButton(
-                      onPressed: isAnswering
-                          ? null
-                          : () {
-                        _verifyAnswer(option);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 32),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showOptions)
+                    Flexible(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: availableWidth * 0.05),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: options.map((option) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                  bottom: availableHeight * 0.015),
+                              child: SizedBox(
+                                width: availableWidth * 0.55, // Reduced from 0.9 to 0.7
+                                height: buttonHeight.clamp(30.0, 50.0),
+                                child: ElevatedButton(
+                                  onPressed: isAnswering
+                                      ? null
+                                      : () => _verifyAnswer(option),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: availableWidth * 0.02,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: AutoSizeText(
+                                    option,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: optionFontSize.clamp(10.0, 18.0),
+                                      color: Colors.black,
+                                    ),
+                                    maxLines: 2,
+                                    minFontSize: 8,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
-                      child: Text(
-                        option,
-                        style: GoogleFonts.outfit(
-                          textStyle: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.black,
+                    ),
+                  if (isAnswerCorrect != null)
+                    Flexible(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        child: SizedBox(
+                          width: availableWidth * 0.5,
+                          height: availableWidth * 0.5,
+                          child: AnimatedResultIcon(
+                            isCorrect: isAnswerCorrect!,
+                            key: ValueKey(isAnswerCorrect),
                           ),
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ),
-            if (isAnswerCorrect != null)
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child: AnimatedResultIcon(
-                  isCorrect: isAnswerCorrect!,
-                  key: ValueKey(isAnswerCorrect),
-                ),
-              ),
-
           ],
-        ),
-      ),
+        );
+      },
     );
   }
-
 }
