@@ -12,10 +12,12 @@ import 'profile_page.dart';
 import 'login_page.dart';
 import 'sign_up_page.dart';
 import 'auth_service.dart';
-
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'global.dart' as globals;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  getTimezone();
   runApp(
     ChangeNotifierProvider(
       create: (_) => AudioNotifier(),
@@ -47,6 +49,10 @@ class TriviaApp extends StatelessWidget {
 class LandingPage extends StatefulWidget {
   @override
   _LandingPageState createState() => _LandingPageState();
+}
+
+Future<void> getTimezone() async {
+  globals.timezone = await FlutterNativeTimezone.getLocalTimezone();
 }
 
 class _LandingPageState extends State<LandingPage> with SingleTickerProviderStateMixin {

@@ -7,7 +7,6 @@ import 'auth_service.dart';
 import 'dart:async';
 import 'package:flag/flag.dart';
 
-
 class ProfilePage extends StatefulWidget {
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -22,6 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isAscending = true; // Default sorting direction
   String _sortColumn = 'score'; // Default sort by 'score'
   List<dynamic> scores = [];
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _checkAuthentication() async {
+
     String? token = await AuthService().getToken();
     if (token == null || token.isEmpty) {
       Navigator.pushReplacementNamed(context, '/');

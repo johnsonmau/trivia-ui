@@ -2,9 +2,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
-
+import 'global.dart' as globals;
 
 class AuthService {
+
   // Save token to local storage
   Future<void> saveToken(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -25,12 +26,14 @@ class AuthService {
 
   // Fetch user details using token
   Future<Map<String, dynamic>?> getUserDetails(String token) async {
+
     final String baseUrl = const String.fromEnvironment("url_base");
     String url = baseUrl+"/v1/auth/user/details";
     final response = await http.get(
       Uri.parse(url),
       headers: {
         'Authorization': 'Bearer $token',
+        "X-User-Timezone": globals.timezone
       },
     );
 

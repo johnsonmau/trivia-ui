@@ -7,6 +7,11 @@ import 'package:trivia_ui/custom_bottom_nav.dart';
 import 'package:http/http.dart' as http;
 import 'package:flag/flag.dart';
 import 'package:trivia_ui/custom_music_player.dart';
+import 'global.dart' as globals;
+
+void printTimezone() {
+  print('Current timezone: ${globals.timezone}');
+}
 
 
 class LeaderboardPage extends StatefulWidget {
@@ -453,10 +458,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   Future<void> getTop25() async {
     final String baseUrl = const String.fromEnvironment("url_base");
     String url = baseUrl+"/v1/scores/leaders/25"; // Replace with your backend endpoint
+
     final response = await http.get(
       Uri.parse(url),
       headers: {
         "Content-Type": "application/json",
+        "X-User-Timezone": globals.timezone
       },
     );
 
