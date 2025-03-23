@@ -57,43 +57,45 @@ class _GameRulesPageState extends State<GameRulesPage> {
       body: Stack(
         children: [
           _buildBackground(),
-          Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    //SimpleAudioPlayer(),
-                    //_buildTitle(),
-                    const SizedBox(height: 20),
-                    _buildSection(
-                      "Objective",
-                      "Answer as many questions correctly as you can in the 1 minute 30 seconds game duration. Each question has a difficulty level that impacts your score.",
-                    ),
-                    const SizedBox(height: 20),
-                    _buildSection(
-                      "How to Play",
-                      "1. The game consists of Easy, Medium, and Hard questions.\n"
-                          "2. Each question has a 15-second timer.\n"
-                          "3. Faster answers score higher points.\n"
-                          "4. Skipping questions results in no points.",
-                    ),
-                    const SizedBox(height: 20),
-                    _buildSection(
-                      "Scoring",
-                      "Easy: 10 points base\n"
-                          "Medium: 20 points base\n"
-                          "Hard: 30 points base\n"
-                          "\n"
-                          "Your final score depends on how quickly you answer within 15 seconds. For example, answering in 10 seconds gives a higher score multiplier.",
-                    ),
-                    const SizedBox(height: 20),
-                    _buildIconsSection(),
-                    const SizedBox(height: 40),
-                    _buildStartButton(context),
-                  ],
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      //SimpleAudioPlayer(),
+                      //_buildTitle(),
+                      const SizedBox(height: 20),
+                      _buildSection(
+                        "Objective",
+                        "Answer as many questions correctly as you can in the 1 minute 30 seconds game duration. Each question has a difficulty level that impacts your score.",
+                      ),
+                      const SizedBox(height: 20),
+                      _buildSection(
+                        "How to Play",
+                        "1. The game consists of Easy, Medium, and Hard questions.\n"
+                            "2. Each question has a 15-second timer.\n"
+                            "3. Faster answers score higher points.\n"
+                            "4. Skipping questions results in no points.",
+                      ),
+                      const SizedBox(height: 20),
+                      _buildSection(
+                        "Scoring",
+                        "Easy: 10 points base\n"
+                            "Medium: 20 points base\n"
+                            "Hard: 30 points base\n"
+                            "\n"
+                            "Your final score depends on how quickly you answer within 15 seconds. For example, answering in 10 seconds gives a higher score multiplier.",
+                      ),
+                      const SizedBox(height: 20),
+                      _buildIconsSection(),
+                      const SizedBox(height: 40),
+                      _buildStartButton(context),
+                    ],
+                  ),
                 ),
               ),
             ),

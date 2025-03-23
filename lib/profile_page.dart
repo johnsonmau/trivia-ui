@@ -718,9 +718,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
 
-
-
-
   Widget _buildPlayButton() {
     return ElevatedButton(
       onPressed: () {
@@ -749,35 +746,37 @@ class _ProfilePageState extends State<ProfilePage> {
         width: 200,
         child: Container(
           color: Colors.black, // Change this to your desired background color
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: Text(
-                  "Logout",
-                  style: GoogleFonts.outfit(
-                    textStyle: const TextStyle(color: Colors.redAccent, fontSize: 16),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: Text(
+                    "Logout",
+                    style: GoogleFonts.outfit(
+                      textStyle: const TextStyle(color: Colors.redAccent, fontSize: 16),
+                    ),
                   ),
+                  onTap: () async {
+                    await AuthService().clearToken();
+                    Navigator.pushReplacementNamed(context, '/');
+                  },
                 ),
-                onTap: () async {
-                  await AuthService().clearToken();
-                  Navigator.pushReplacementNamed(context, '/');
-                },
-              ),
-              const Spacer(), // Pushes the delete account button to the bottom
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: Text(
-                  "Delete Account",
-                  style: GoogleFonts.outfit(
-                    textStyle: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                const Spacer(), // Pushes the delete account button to the bottom
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: Text(
+                    "Delete Account",
+                    style: GoogleFonts.outfit(
+                      textStyle: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                    ),
                   ),
+                  onTap: _showDeleteConfirmationDialog,
                 ),
-                onTap: _showDeleteConfirmationDialog,
-              ),
-              const SizedBox(height: 20), // Add spacing at the bottom
-            ],
+                const SizedBox(height: 20), // Add spacing at the bottom
+              ],
+            ),
           ),
         ),
       ),
