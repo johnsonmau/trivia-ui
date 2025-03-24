@@ -156,10 +156,15 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushNamed(context, '/leaderboard');
         break;
 
+      case 4: // Rules
+        Navigator.pushNamed(context, '/privacy');
+        break;
+
       default:
         break;
     }
   }
+
 
   Widget _buildTextField(String label, TextEditingController controller, bool obscureText, FocusNode focusNode, FocusNode? nextFocusNode) {
     return Column(

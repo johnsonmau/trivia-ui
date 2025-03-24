@@ -1,12 +1,12 @@
-import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class AudioManager {
-  // Private constructor
-  AudioManager._internal();
-
   // Singleton instance
-  static final AudioManager instance = AudioManager._internal();
+  static final AudioManager instance = AudioManager._();
 
-  // The single audio player
+  // Private constructor
+  AudioManager._();
+
+  // Single audio player instance
   final AudioPlayer player = AudioPlayer();
 }

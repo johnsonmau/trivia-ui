@@ -40,6 +40,10 @@ class BottomNavBar extends StatelessWidget {
           icon: Icon(Icons.connect_without_contact),
           label: 'Leaderboard',
         ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.policy),
+          label: 'Privacy Policy',
+        ),
       ],
       selectedItemColor: Colors.teal,
       unselectedItemColor: Colors.black,

@@ -58,10 +58,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         Navigator.pushNamed(context, '/leaderboard');
         break;
 
+
+      case 4: // Rules
+        Navigator.pushNamed(context, '/privacy');
+        break;
+
       default:
         break;
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

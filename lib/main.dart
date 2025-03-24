@@ -8,6 +8,7 @@ import 'package:trivia_ui/custom_music_player.dart';
 import 'package:trivia_ui/game_page.dart';
 import 'package:trivia_ui/game_rules_page.dart';
 import 'package:trivia_ui/leaderboard_page.dart';
+import 'package:trivia_ui/privacy_policy_page.dart';
 import 'profile_page.dart';
 import 'login_page.dart';
 import 'sign_up_page.dart';
@@ -41,6 +42,7 @@ class TriviaApp extends StatelessWidget {
         '/play': (context) => GamePage(),
         '/rules': (context) => GameRulesPage(),
         '/leaderboard': (context) => LeaderboardPage(),
+        '/privacy': (context) => PrivacyPolicyPage()
       },
     );
   }
@@ -147,10 +149,15 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
         Navigator.pushNamed(context, '/leaderboard');
         break;
 
+      case 4: // Rules
+        Navigator.pushNamed(context, '/privacy');
+        break;
+
       default:
         break;
     }
   }
+
 
 
   @override

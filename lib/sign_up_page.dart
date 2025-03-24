@@ -70,6 +70,10 @@ class _SignUpPageState extends State<SignUpPage> {
         Navigator.pushNamed(context, '/leaderboard');
         break;
 
+      case 4: // Rules
+        Navigator.pushNamed(context, '/privacy');
+        break;
+
       default:
         break;
     }

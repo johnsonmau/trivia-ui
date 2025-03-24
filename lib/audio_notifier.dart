@@ -1,38 +1,33 @@
 import 'package:flutter/foundation.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class AudioNotifier extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   bool _audioLoaded = false;
 
   AudioNotifier() {
-    // Whenever the player state changes (playing/paused/completed), notifyListeners().
-    _player.playerStateStream.listen((state) {
+    // Listen for player state changes
+    _player.onPlayerStateChanged.listen((state) {
       notifyListeners();
     });
   }
 
-  bool get isPlaying => _player.playerState.playing;
+  bool get isPlaying => _player.state == PlayerState.playing;
 
   Future<void> loadUrl(String url) async {
     if (!_audioLoaded) {
-      await _player.setLoopMode(LoopMode.one);
-
-      await _player.setUrl(url);
-      // optional: await _player.setLoopMode(LoopMode.one);
+      await _player.setReleaseMode(ReleaseMode.loop);
+      await _player.setSourceAsset('galactic_rap.mp3');
       _audioLoaded = true;
     }
-   // await _player.play();
-    // Don’t call play() here if you don’t want it to start automatically every time.
   }
 
   Future<void> togglePlayPause() async {
     if (isPlaying) {
       await _player.pause();
     } else {
-      await _player.play();
+      await _player.resume();
     }
-    // The stream listener calls notifyListeners() for us.
   }
 
   Future<void> seek(Duration position) async {
@@ -40,6 +35,6 @@ class AudioNotifier extends ChangeNotifier {
   }
 
   /// Expose streams if needed:
-  Stream<Duration> get positionStream => _player.positionStream;
-  Stream<Duration?> get durationStream => _player.durationStream;
+  Stream<Duration> get positionStream => _player.onPositionChanged;
+  Stream<Duration?> get durationStream => _player.onDurationChanged;
 }

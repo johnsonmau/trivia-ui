@@ -46,10 +46,15 @@ class _GameRulesPageState extends State<GameRulesPage> {
         Navigator.pushNamed(context, '/leaderboard');
         break;
 
+      case 4: // Rules
+        Navigator.pushNamed(context, '/privacy');
+        break;
+
       default:
         break;
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
