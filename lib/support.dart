@@ -4,13 +4,13 @@ import 'package:trivia_ui/custom_bottom_nav.dart';
 import 'package:trivia_ui/custom_music_player.dart';
 import 'package:trivia_ui/auth_service.dart';
 
-class PrivacyPolicyPage extends StatefulWidget {
+class SupportPage extends StatefulWidget {
   @override
-  _PrivacyPolicyPageState createState() => _PrivacyPolicyPageState();
+  _SupportPageState createState() => _SupportPageState();
 }
 
-class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
-  int _selectedIndex = 4;
+class _SupportPageState extends State<SupportPage> {
+  int _selectedIndex = 0;
   String? token;
 
   @override
@@ -72,52 +72,32 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
             child: Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(0.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTitle("Privacy Policy"),
-                      const SizedBox(height: 40),
+                      _buildTitle("Support"),
+                      const SizedBox(height: 20),
                       _buildSection(
-                        "Information We Collect",
-                        "We may collect personal information such as your name, email, and game scores to enhance your experience. Additionally, we may collect device information, IP addresses, and interaction data to improve our service.",
+                        "",
+                        "Welcome to the Brainzzy support page! Below, you'll find information on troubleshooting issues and contacting us for further assistance.",
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
-                        "How We Use Your Information",
-                        "Your data is used to personalize your experience, improve our services, and provide game-related updates. We may also use aggregated data for analytics and performance tracking.",
+                        "What is Brainzzy?",
+                        "Brainzzy is a fast-paced general knowledge trivia game where players answer multiple-choice questions within a time limit. The game is designed to test your intelligence and reward quick thinking.",
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
-                        "Data Security",
-                        "We implement security measures to protect your information, including encryption and access controls. However, no system is completely secure, and we cannot guarantee absolute security.",
+                        "How Do I Report a Bug or Issue?",
+                        "If you're experiencing any issues, please try the following:\n- Ensure your app is up to date.\n- Restart your device and relaunch the app.\n- Clear the app cache.\n- If the issue persists, contact our support team.",
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
-                        "Third-Party Services",
-                        "We may use third-party services for analytics, advertising, and authentication. These services may collect data based on their privacy policies, and we recommend reviewing them for further details.",
+                        "Contact Us",
+                        "For further assistance, feel free to reach out:\n📧 Email: mbjjr95@gmail.com\n 📱 Social Media: Follow us on Twitter, Instagram, and Facebook for updates!",
                       ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        "Your Rights",
-                        "You have the right to access, modify, or delete your personal data. You can request changes or deletions by contacting us through the provided support channels.",
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        "Cookies and Tracking Technologies",
-                        "We may use cookies and similar tracking technologies to enhance user experience and analyze usage patterns. You can adjust your cookie preferences in your browser settings.",
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        "Children’s Privacy",
-                        "Our services are not intended for children under the age of 13. We do not knowingly collect personal data from minors. If you believe we have collected such data, please contact us immediately.",
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSection(
-                        "Changes to This Policy",
-                        "We may update this privacy policy periodically. Please review it frequently for any changes. Continued use of our service constitutes acceptance of the updated policy.",
-                      ),
-                      const SizedBox(height: 40),
+
                     ],
                   ),
                 ),
@@ -158,35 +138,31 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
   }
 
   Widget _buildTitle(String title) {
-    return Align(
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20), // Prevents text overflow
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 40,
-            fontFamily: 'Doto',
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-          ),
-          textAlign: TextAlign.center,
+    return Center(
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 40,
+          fontFamily: 'Doto',
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
         ),
+        textAlign: TextAlign.center,
       ),
     );
   }
 
 
-
   Widget _buildSection(String title, String content) {
-    return Center(
+    return Align(
+      alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontFamily: 'Doto',
               fontWeight: FontWeight.w900,
@@ -196,7 +172,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           ),
           const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20), // Prevents overflow
+            padding: const EdgeInsets.symmetric(horizontal: 20), // Adjust for centering
             child: Text(
               content,
               style: GoogleFonts.outfit(

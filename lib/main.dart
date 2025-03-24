@@ -9,6 +9,7 @@ import 'package:trivia_ui/game_page.dart';
 import 'package:trivia_ui/game_rules_page.dart';
 import 'package:trivia_ui/leaderboard_page.dart';
 import 'package:trivia_ui/privacy_policy_page.dart';
+import 'package:trivia_ui/support.dart';
 import 'profile_page.dart';
 import 'login_page.dart';
 import 'sign_up_page.dart';
@@ -42,7 +43,8 @@ class TriviaApp extends StatelessWidget {
         '/play': (context) => GamePage(),
         '/rules': (context) => GameRulesPage(),
         '/leaderboard': (context) => LeaderboardPage(),
-        '/privacy': (context) => PrivacyPolicyPage()
+        '/privacy': (context) => PrivacyPolicyPage(),
+        '/support': (context) => SupportPage()
       },
     );
   }
