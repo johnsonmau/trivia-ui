@@ -42,7 +42,7 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.policy),
-          label: 'Privacy Policy',
+          label: 'Privacy',
         ),
       ],
       selectedItemColor: Colors.teal,

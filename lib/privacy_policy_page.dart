@@ -76,9 +76,10 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
+                      _buildTitle("Privacy Policy"),
+                      const SizedBox(height: 40),
                       _buildSection(
-                        "Privacy Policy",
+                        "Information We Collect",
                         "We may collect personal information such as your name, email, and game scores to enhance your experience. Additionally, we may collect device information, IP addresses, and interaction data to improve our service.",
                       ),
                       const SizedBox(height: 20),
@@ -157,18 +158,20 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
   }
 
   Widget _buildTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.outfit(
-        textStyle: const TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
+    return Center(
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 40,
+          fontFamily: 'Doto',
+          fontWeight: FontWeight.w900,
           color: Colors.white,
         ),
+        textAlign: TextAlign.center,
       ),
-      textAlign: TextAlign.center,
     );
   }
+
 
   Widget _buildSection(String title, String content) {
     return Column(
@@ -181,7 +184,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
               fontFamily: 'Doto',
               fontWeight: FontWeight.w900,
               color: Colors.white),
-              textAlign: TextAlign.center,
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
         Text(

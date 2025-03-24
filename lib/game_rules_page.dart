@@ -71,9 +71,8 @@ class _GameRulesPageState extends State<GameRulesPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      //SimpleAudioPlayer(),
-                      //_buildTitle(),
-                      const SizedBox(height: 20),
+                      _buildTitle("Rules"),
+                      const SizedBox(height: 40),
                       _buildSection(
                         "Objective",
                         "Answer as many questions correctly as you can in the 1 minute 30 seconds game duration. Each question has a difficulty level that impacts your score.",
@@ -130,16 +129,18 @@ class _GameRulesPageState extends State<GameRulesPage> {
     );
   }
 
-  Widget _buildTitle() {
-    return Text(
-      "Game Rules",
-      style: TextStyle(
-          fontSize: 48,
+  Widget _buildTitle(String title) {
+    return Center(
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 40,
           fontFamily: 'Doto',
           fontWeight: FontWeight.w900,
-        color: Colors.white,
+          color: Colors.white,
+        ),
+        textAlign: TextAlign.center,
       ),
-      textAlign: TextAlign.center,
     );
   }
 
