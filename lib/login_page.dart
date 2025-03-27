@@ -299,9 +299,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.black)
-                          : Text(
+                      child: Text(
                         "Sign up Instead",
                         style: GoogleFonts.outfit(
                           textStyle: TextStyle(fontSize: 18, color: Colors.black),

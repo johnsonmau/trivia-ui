@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Add this import
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
-  final isAuthenticated;
+  final bool isAuthenticated; // Fixed typo: added 'bool' type
 
   BottomNavBar({
     Key? key,
     required this.currentIndex,
     required this.onTap,
-    required this.isAuthenticated
+    required this.isAuthenticated,
   }) : super(key: key);
 
   @override
@@ -47,7 +48,12 @@ class BottomNavBar extends StatelessWidget {
       ],
       selectedItemColor: Colors.teal,
       unselectedItemColor: Colors.black,
+      selectedLabelStyle: GoogleFonts.outfit(
+        fontSize: 12, // Default size for selected labels, adjust as needed
+      ),
+      unselectedLabelStyle: GoogleFonts.outfit(
+        fontSize: 12, // Default size for unselected labels, adjust as needed
+      ),
     );
   }
-
 }

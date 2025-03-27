@@ -11,6 +11,8 @@ import 'auth_service.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
 class GamePage extends StatefulWidget {
+  const GamePage({super.key});
+
   @override
   _GamePageState createState() => _GamePageState();
 }
@@ -27,9 +29,47 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late Timer _gameTimer;
   late Timer _questionTimer;
-
   Duration _gameTimeRemaining = const Duration(seconds: 90);
   Duration _questionTimeRemaining = const Duration(seconds: 15);
+  String selectedCategory = "Mixed";
+  String selectedDifficulty = "Mixed"; // Default to Medium
+
+  final List<String> categories = [
+    "Mixed",
+    "General Knowledge",
+    "Entertainment: Books",
+    "Entertainment: Board Games",
+    "Entertainment: Cartoons",
+    "Entertainment: Comics",
+    "Entertainment: Film",
+    "Entertainment: Japanese Anime",
+    "Entertainment: Music",
+    "Entertainment: Musicals & Theatres",
+    "Entertainment: Television",
+    "Entertainment: Video Games",
+    "Geography",
+    "History",
+    "Mythology",
+    "Politics",
+    "Science & Nature",
+    "Science: Computers",
+    "Science: Gadgets",
+    "Science: Mathematics",
+    "Sports",
+    "Vehicles",
+    "Art",
+    "Animals",
+    "Celebrities"
+  ];
+
+  final List<String> difficulties = ["Mixed", "Easy", "Medium", "Hard"];
+
+  final Map<String, Map<String, dynamic>> difficultyIcons = {
+    "Mixed": {'icon': Icons.shuffle, 'color': Colors.purpleAccent},
+    "Easy": {'icon': Icons.sentiment_satisfied, 'color': Colors.green},
+    "Medium": {'icon': Icons.sentiment_neutral, 'color': Colors.orange},
+    "Hard": {'icon': Icons.sentiment_dissatisfied, 'color': Colors.red},
+  };
 
   late AnimationController _questionTimerController;
 
@@ -38,13 +78,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     super.initState();
     _checkAuthentication();
     _loadToken();
-
-    _questionTimerController = AnimationController(
-      vsync: this,
-      duration: _questionTimeRemaining,
-    );
-
-    _questionTimer = Timer(const Duration(seconds: 0), () {});
+    _questionTimerController = AnimationController(vsync: this, duration: _questionTimeRemaining);
+    _gameTimer = Timer(Duration.zero, () {});
+    _questionTimer = Timer(Duration.zero, () {});
   }
 
   @override
@@ -57,13 +93,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   Future<void> _checkAuthentication() async {
     String? token = await AuthService().getToken();
-    if (token == null || token.isEmpty) {
-      Navigator.pushReplacementNamed(context, '/');
-      return;
-    }
-
-    if (AuthService().badToken(token)) {
-      AuthService().clearToken();
+    if (token == null || token.isEmpty || AuthService().badToken(token)) {
+      await AuthService().clearToken();
       Navigator.pushReplacementNamed(context, '/');
     }
   }
@@ -74,9 +105,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   void _startGame() {
-    setState(() {
-      isGameStarted = true;
-    });
+    setState(() => isGameStarted = true);
     _startGameTimer();
     _fetchNextQuestion();
   }
@@ -97,7 +126,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   void _startQuestionTimer() {
     _questionTimerController.reset();
     _questionTimerController.forward();
-
     _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         if (_questionTimeRemaining > const Duration(seconds: 1)) {
@@ -117,9 +145,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   void _resetQuestionTimer() {
     _questionTimer.cancel();
-    setState(() {
-      _questionTimeRemaining = const Duration(seconds: 15);
-    });
+    setState(() => _questionTimeRemaining = const Duration(seconds: 15));
     _startQuestionTimer();
   }
 
@@ -135,19 +161,14 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     try {
       final String baseUrl = const String.fromEnvironment("url_base");
-      String url = "$baseUrl/v1/questions/random";
+      String url = "$baseUrl/v1/questions/random?category=$selectedCategory&difficulty=$selectedDifficulty";
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
+        headers: {"Content-Type": "application/json", "Authorization": "Bearer $token"},
       );
 
       if (response.statusCode == 200) {
-        setState(() {
-          currentQuestion = json.decode(response.body);
-        });
+        setState(() => currentQuestion = json.decode(response.body));
         _resetQuestionTimer();
       } else {
         _showErrorDialog("Failed to load the question from the server.");
@@ -155,9 +176,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     } catch (e) {
       _showErrorDialog("Unable to connect to the server.");
     } finally {
-      setState(() {
-        isLoadingQuestion = false;
-      });
+      setState(() => isLoadingQuestion = false);
     }
   }
 
@@ -179,7 +198,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       isAnswerCorrect = false;
       showOptions = false;
     });
-
     await Future.delayed(const Duration(seconds: 2));
     _fetchNextQuestion();
   }
@@ -190,14 +208,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     try {
       final String baseUrl = const String.fromEnvironment("url_base");
-      String apiUrl = "$baseUrl/v1/scores/save";
       await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-        body: json.encode({'score': userScore}),
+        Uri.parse("$baseUrl/v1/scores/save"),
+        headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"},
+        body: json.encode({'score': userScore, 'category': selectedCategory, 'difficulty': selectedDifficulty}),
       );
     } catch (e) {}
 
@@ -217,13 +231,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 color: Colors.black87,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 20,
-                    offset: Offset(0, 10),
-                  ),
-                ],
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -255,27 +263,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                                context, '/profile', (route) => false);
-                          },
+                          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/profile', (route) => false),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
                             padding: EdgeInsets.symmetric(
-                              horizontal:
-                              MediaQuery.of(context).size.width * 0.05,
-                              vertical:
-                              MediaQuery.of(context).size.height * 0.015,
+                              horizontal: MediaQuery.of(context).size.width * 0.05,
+                              vertical: MediaQuery.of(context).size.height * 0.015,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Text(
                             "Profile",
                             style: GoogleFonts.outfit(
-                              fontSize:
-                              MediaQuery.of(context).size.width * 0.04,
+                              fontSize: MediaQuery.of(context).size.width * 0.04,
                               color: Colors.white,
                             ),
                           ),
@@ -284,27 +284,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       SizedBox(width: MediaQuery.of(context).size.width * 0.03),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                                context, '/play', (route) => false);
-                          },
+                          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/play', (route) => false),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             padding: EdgeInsets.symmetric(
-                              horizontal:
-                              MediaQuery.of(context).size.width * 0.05,
-                              vertical:
-                              MediaQuery.of(context).size.height * 0.015,
+                              horizontal: MediaQuery.of(context).size.width * 0.05,
+                              vertical: MediaQuery.of(context).size.height * 0.015,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: Text(
                             "Play Again",
                             style: GoogleFonts.outfit(
-                              fontSize:
-                              MediaQuery.of(context).size.width * 0.04,
+                              fontSize: MediaQuery.of(context).size.width * 0.04,
                               color: Colors.white,
                             ),
                           ),
@@ -324,18 +316,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Error"),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
+      ),
     );
   }
 
@@ -368,10 +353,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         children: [
           Container(
             decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background.jpg'),
-                fit: BoxFit.cover,
-              ),
+              image: DecorationImage(image: AssetImage('assets/background.jpg'), fit: BoxFit.cover),
             ),
           ),
           Container(color: Colors.black.withOpacity(0.6)),
@@ -380,41 +362,31 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               height: MediaQuery.of(context).size.height,
               width: MediaQuery.of(context).size.width,
               child: isGameStarted
-                  ? (isLoadingQuestion
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildQuestionContent())
+                  ? (isLoadingQuestion ? const Center(child: CircularProgressIndicator()) : _buildQuestionContent())
                   : _buildStartContent(),
             ),
           ),
           Positioned(
             bottom: MediaQuery.of(context).size.height * 0.02,
             right: MediaQuery.of(context).size.width * 0.04,
-            child: SimpleAudioPlayer(),
+            child: const SimpleAudioPlayer(),
           ),
         ],
       ),
       bottomNavigationBar: isGameStarted
           ? null
-          : BottomNavBar(
-          currentIndex: _selectedIndex,
-          onTap: _onBottomNavigationTapped,
-          isAuthenticated: token != null),
+          : BottomNavBar(currentIndex: _selectedIndex, onTap: _onBottomNavigationTapped, isAuthenticated: token != null),
     );
   }
 
   void _onBottomNavigationTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
+    setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
         Navigator.pushReplacementNamed(context, '/');
         break;
       case 1:
-        token != null
-            ? Navigator.pushReplacementNamed(context, '/profile')
-            : Navigator.pushNamed(context, '/login');
+        token != null ? Navigator.pushReplacementNamed(context, '/profile') : Navigator.pushNamed(context, '/login');
         break;
       case 2:
         Navigator.pushNamed(context, '/rules');
@@ -429,51 +401,23 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     return await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.black87,
-          title: Text(
-            "Exit Game?",
-            style: GoogleFonts.outfit(
-              fontSize: MediaQuery.of(context).size.width * 0.05,
-              fontWeight: FontWeight.bold,
-              color: Colors.redAccent,
-            ),
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: Text("Exit Game?", style: GoogleFonts.outfit(fontSize: MediaQuery.of(context).size.width * 0.05, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+        content: Text("Are you sure you want to exit? Your progress will be lost.",
+            style: GoogleFonts.outfit(fontSize: MediaQuery.of(context).size.width * 0.04, color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text("Cancel", style: GoogleFonts.outfit(fontSize: MediaQuery.of(context).size.width * 0.035, color: Colors.green)),
           ),
-          content: Text(
-            "Are you sure you want to exit? Your progress will be lost.",
-            style: GoogleFonts.outfit(
-              fontSize: MediaQuery.of(context).size.width * 0.04,
-              color: Colors.white70,
-            ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text("Exit", style: GoogleFonts.outfit(fontSize: MediaQuery.of(context).size.width * 0.035, color: Colors.white)),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                "Cancel",
-                style: GoogleFonts.outfit(
-                  fontSize: MediaQuery.of(context).size.width * 0.035,
-                  color: Colors.green,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-              ),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(
-                "Exit",
-                style: GoogleFonts.outfit(
-                  fontSize: MediaQuery.of(context).size.width * 0.035,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     ) ??
         false;
   }
@@ -498,29 +442,197 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             },
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+          // Category Dropdown
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double mobileBreakpoint = 600;
+              bool isMobile = constraints.maxWidth < mobileBreakpoint;
+
+              Widget buildDropdown({
+                required String? value,
+                required List<String> items,
+                required ValueChanged<String?> onChanged,
+              }) {
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 250, minWidth: 160),
+                  child: IntrinsicWidth(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(10)),
+                      child: DropdownButton<String>(
+                        dropdownColor: Colors.black,
+                        value: value,
+                        onChanged: onChanged,
+                        items: items.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+                              child: Text(
+                                value,
+                                style: GoogleFonts.outfit(color: Colors.white, fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        iconSize: 24,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: isMobile
+                    ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Category:", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16)),
+                        const SizedBox(width: 10),
+                        buildDropdown(
+                          value: selectedCategory,
+                          items: categories,
+                          onChanged: (String? newValue) => setState(() => selectedCategory = newValue!),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Category:", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16)),
+                    const SizedBox(width: 10),
+                    buildDropdown(
+                      value: selectedCategory,
+                      items: categories,
+                      onChanged: (String? newValue) => setState(() => selectedCategory = newValue!),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+          // Difficulty Panel
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double mobileBreakpoint = 600;
+              bool isMobile = constraints.maxWidth < mobileBreakpoint;
+
+              // Build a single difficulty button
+              Widget buildDifficultyButton(String difficulty) {
+                final isSelected = difficulty == selectedDifficulty;
+                final difficultyData = difficultyIcons[difficulty]!;
+                final buttonColor = difficultyData['color'] as Color;
+
+                return SizedBox(
+                  width: 100,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => selectedDifficulty = difficulty),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isSelected ? buttonColor.withOpacity(0.8) : Colors.black,
+                      foregroundColor: buttonColor,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(color: buttonColor, width: isSelected ? 2 : 1),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(difficultyData['icon'] as IconData, size: 16, color: isSelected ? Colors.white : buttonColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          difficulty,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            color: isSelected ? Colors.white : buttonColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              // Split difficulties into two rows for mobile
+              final firstRow = difficulties.sublist(0, 2); // "Mixed", "Easy"
+              final secondRow = difficulties.sublist(2, 4); // "Medium", "Hard"
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    isMobile
+                        ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: firstRow
+                              .map((difficulty) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: buildDifficultyButton(difficulty),
+                          ))
+                              .toList(),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: secondRow
+                              .map((difficulty) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: buildDifficultyButton(difficulty),
+                          ))
+                              .toList(),
+                        ),
+                      ],
+                    )
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: difficulties
+                          .map((difficulty) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                        child: buildDifficultyButton(difficulty),
+                      ))
+                          .toList(),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+          // Start Game Button
           ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 300,  // Maximum width for the button
-              maxHeight: 60,  // Maximum height for the button
-            ),
+            constraints: const BoxConstraints(maxWidth: 300, maxHeight: 60),
             child: ElevatedButton(
               onPressed: _startGame,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: EdgeInsets.symmetric(
-                  vertical: (MediaQuery.of(context).size.height * 0.02).clamp(10.0, 20.0),  // Clamp vertical padding
-                  horizontal: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 40.0), // Clamp horizontal padding
+                  vertical: (MediaQuery.of(context).size.height * 0.02).clamp(10.0, 20.0),
+                  horizontal: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 40.0),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
               child: Text(
                 "Start Game",
-                style: GoogleFonts.outfit(
-                  fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 24.0), // Clamp font size
-                  color: Colors.white,
-                ),
+                style: GoogleFonts.outfit(fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 24.0), color: Colors.white),
               ),
             ),
           ),
@@ -538,13 +650,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     bool isCorrect = false;
     try {
       final String baseUrl = const String.fromEnvironment("url_base");
-      String apiUrl = "$baseUrl/v1/questions/solve";
       final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
+        Uri.parse("$baseUrl/v1/questions/solve"),
+        headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"},
         body: json.encode({'qid': currentQuestion!["id"], 'guess': selectedOption}),
       );
       isCorrect = json.decode(response.body)!["correctAnswer"];
@@ -565,25 +673,17 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   Widget _buildQuestionContent() {
     if (currentQuestion == null) {
-      return const Center(
-        child: Text(
-          "No question available.",
-          style: TextStyle(color: Colors.white),
-        ),
-      );
+      return const Center(child: Text("No question available.", style: TextStyle(color: Colors.white)));
     }
 
     final unescape = HtmlUnescape();
     final unescapedQuestion = unescape.convert(currentQuestion!["question"]);
-    final options = List<String>.from(
-        currentQuestion!["allAnswers"].map((option) => unescape.convert(option)));
+    final options = List<String>.from(currentQuestion!["allAnswers"].map((option) => unescape.convert(option)));
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
         final availableWidth = constraints.maxWidth;
-
-        // Calculate dynamic sizes based on available space
         final scoreFontSize = availableWidth * 0.09;
         final timerFontSize = availableWidth * 0.045;
         final questionFontSize = availableWidth * 0.06;
@@ -594,7 +694,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         return Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top section: Score and Timers
             Column(
               children: [
                 SizedBox(height: availableHeight * 0.02),
@@ -610,10 +709,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                 SizedBox(height: availableHeight * 0.015),
                 Text(
                   "Game Timer: ${_formatDuration(_gameTimeRemaining)}",
-                  style: GoogleFonts.outfit(
-                    fontSize: timerFontSize.clamp(12.0, 18.0),
-                    color: Colors.white,
-                  ),
+                  style: GoogleFonts.outfit(fontSize: timerFontSize.clamp(12.0, 18.0), color: Colors.white),
                 ),
                 SizedBox(height: availableHeight * 0.015),
                 SizedBox(
@@ -630,34 +726,23 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       ),
                       Text(
                         "${_questionTimeRemaining.inSeconds}",
-                        style: GoogleFonts.outfit(
-                          fontSize: (timerSize * 0.35).clamp(16.0, 26.0),
-                          color: Colors.white,
-                        ),
+                        style: GoogleFonts.outfit(fontSize: (timerSize * 0.35).clamp(16.0, 26.0), color: Colors.white),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-
-            // Middle section: Question
             Padding(
               padding: EdgeInsets.symmetric(horizontal: availableWidth * 0.05),
               child: AutoSizeText(
                 unescapedQuestion,
-                style: GoogleFonts.outfit(
-                  fontSize: questionFontSize.clamp(16.0, 24.0),
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GoogleFonts.outfit(fontSize: questionFontSize.clamp(16.0, 24.0), color: Colors.white, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
                 maxLines: 3,
                 minFontSize: 12,
               ),
             ),
-
-            // Bottom section: Options and Result
             Flexible(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -665,36 +750,25 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                   if (showOptions)
                     Flexible(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: availableWidth * 0.05),
+                        padding: EdgeInsets.symmetric(horizontal: availableWidth * 0.05),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: options.map((option) {
                             return Padding(
-                              padding: EdgeInsets.only(
-                                  bottom: availableHeight * 0.015),
+                              padding: EdgeInsets.only(bottom: availableHeight * 0.015),
                               child: SizedBox(
-                                width: availableWidth * 0.55, // Reduced from 0.9 to 0.7
+                                width: availableWidth * 0.55,
                                 height: buttonHeight.clamp(30.0, 50.0),
                                 child: ElevatedButton(
-                                  onPressed: isAnswering
-                                      ? null
-                                      : () => _verifyAnswer(option),
+                                  onPressed: isAnswering ? null : () => _verifyAnswer(option),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: availableWidth * 0.02,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
+                                    padding: EdgeInsets.symmetric(horizontal: availableWidth * 0.02),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                   ),
                                   child: AutoSizeText(
                                     option,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: optionFontSize.clamp(10.0, 18.0),
-                                      color: Colors.black,
-                                    ),
+                                    style: GoogleFonts.outfit(fontSize: optionFontSize.clamp(10.0, 18.0), color: Colors.black),
                                     maxLines: 2,
                                     minFontSize: 8,
                                     textAlign: TextAlign.center,
@@ -713,10 +787,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                         child: SizedBox(
                           width: availableWidth * 0.5,
                           height: availableWidth * 0.5,
-                          child: AnimatedResultIcon(
-                            isCorrect: isAnswerCorrect!,
-                            key: ValueKey(isAnswerCorrect),
-                          ),
+                          child: AnimatedResultIcon(isCorrect: isAnswerCorrect!, key: ValueKey(isAnswerCorrect)),
                         ),
                       ),
                     ),
