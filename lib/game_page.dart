@@ -496,7 +496,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Category:", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16)),
                         const SizedBox(width: 10),
                         buildDropdown(
                           value: selectedCategory,
