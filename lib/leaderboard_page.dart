@@ -333,10 +333,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                   // Difficulty Panel
                                   Column(
                                     children: [
-                                      Text(
-                                        "Difficulty:",
-                                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
-                                      ),
                                       const SizedBox(height: 10),
                                       // "All Difficulties" button
                                       buildDifficultyButton("All Difficulties"),
