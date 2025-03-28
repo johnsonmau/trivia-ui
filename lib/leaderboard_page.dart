@@ -311,10 +311,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                       : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        "Category:",
-                                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
-                                      ),
                                       SizedBox(width: 10),
                                       _buildDropdown(
                                         value: selectedCategory,
